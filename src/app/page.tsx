@@ -17,8 +17,6 @@ import {
     TrendingUp,
     Target,
     Award,
-    Search,
-    Bell,
     Star,
     Play,
     ImageIcon,

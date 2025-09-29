@@ -102,7 +102,7 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName }
                             {(['easy', 'medium', 'hard'] as const).map((diff) => (
                                 <Button
                                     key={diff}
-                                    variant={difficulty === diff ? 'default' : 'outline'}
+                                    variant={difficulty === diff ? 'primary' : 'outline'}
                                     size="sm"
                                     onClick={() => setDifficulty(diff)}
                                     className={`text-xs ${difficulty === diff
@@ -119,7 +119,7 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName }
                     {/* Niveau d'éducation */}
                     <div>
                         <Typography variant="h6" className="font-semibold text-foreground mb-3">
-                            Niveau d'éducation
+                            Niveau d&apos;éducation
                         </Typography>
                         <select
                             value={educationLevel}
@@ -153,7 +153,7 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName }
                                 <option value="Master">Master</option>
                                 <option value="Master Pro">Master Pro</option>
                                 <option value="Doctorat">Doctorat</option>
-                                <option value="École d'ingénieur">École d'ingénieur</option>
+                                <option value="École d&apos;ingénieur">École d&apos;ingénieur</option>
                                 <option value="École de commerce">École de commerce</option>
                                 <option value="École spécialisée">École spécialisée</option>
                                 <option value="Formation continue">Formation continue</option>
@@ -161,7 +161,7 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName }
 
                             <optgroup label="👨‍💼 Professionnel">
                                 <option value="En activité">En activité</option>
-                                <option value="En recherche d'emploi">En recherche d'emploi</option>
+                                <option value="En recherche d&apos;emploi">En recherche d&apos;emploi</option>
                                 <option value="Retraité">Retraité</option>
                             </optgroup>
 
@@ -186,7 +186,7 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName }
                             </Typography>
                         </div>
                         <Typography variant="caption" color="muted" className="mt-1">
-                            Questions ouvertes désactivées pour l'instant
+                            Questions ouvertes désactivées pour l&apos;instant
                         </Typography>
                     </div>
                 </div>

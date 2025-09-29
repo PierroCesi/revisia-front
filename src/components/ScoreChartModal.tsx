@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button, Card, Typography } from '@/components/ui';
 import { X, TrendingUp, BarChart3 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -24,13 +24,7 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
     const [loading, setLoading] = useState(false);
     const [chartType, setChartType] = useState<'line' | 'bar'>('line');
 
-    useEffect(() => {
-        if (isOpen && lessonId) {
-            loadScoreHistory();
-        }
-    }, [isOpen, lessonId]);
-
-    const loadScoreHistory = async () => {
+    const loadScoreHistory = useCallback(async () => {
         setLoading(true);
         try {
             const { lessonsAPI } = await import('@/lib/api');
@@ -55,7 +49,13 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
         } finally {
             setLoading(false);
         }
-    };
+    }, [lessonId]);
+
+    useEffect(() => {
+        if (isOpen && lessonId) {
+            loadScoreHistory();
+        }
+    }, [isOpen, lessonId, loadScoreHistory]);
 
     if (!isOpen) return null;
 
@@ -128,7 +128,7 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                 <div className="flex justify-center mb-6">
                     <div className="flex space-x-2">
                         <Button
-                            variant={chartType === 'line' ? 'default' : 'outline'}
+                            variant={chartType === 'line' ? 'primary' : 'outline'}
                             size="sm"
                             onClick={() => setChartType('line')}
                             className={chartType === 'line' ? 'bg-orange-primary text-white' : ''}
@@ -137,7 +137,7 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                             Ligne
                         </Button>
                         <Button
-                            variant={chartType === 'bar' ? 'default' : 'outline'}
+                            variant={chartType === 'bar' ? 'primary' : 'outline'}
                             size="sm"
                             onClick={() => setChartType('bar')}
                             className={chartType === 'bar' ? 'bg-orange-primary text-white' : ''}

@@ -1,28 +1,19 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { documentsAPI, lessonsAPI, Document, Lesson, LessonStats } from '@/lib/api';
+import { documentsAPI, lessonsAPI, Lesson } from '@/lib/api';
 import { Button, Card, Typography, Badge } from '@/components/ui';
 import {
     Upload,
-    LogOut,
     FileText,
     Brain,
-    Target,
-    BarChart3,
     Play,
-    CheckCircle,
-    Clock,
-    Star,
-    TrendingUp,
     BookOpen,
     Zap,
     RotateCcw
 } from 'lucide-react';
 import Link from 'next/link';
-import FileUpload from '@/components/FileUpload';
 import AISettingsModal, { AISettings } from '@/components/AISettingsModal';
 import ScoreChartModal from '@/components/ScoreChartModal';
 
@@ -37,13 +28,9 @@ const getDifficultyLabel = (difficulty: string) => {
 };
 
 export default function Dashboard() {
-    const { user, logout } = useAuth();
-    const router = useRouter();
-    const [documents, setDocuments] = useState<Document[]>([]);
+    const { user } = useAuth();
     const [lessons, setLessons] = useState<Lesson[]>([]);
-    const [stats, setStats] = useState<LessonStats | null>(null);
     const [loading, setLoading] = useState(true);
-    const [showUpload, setShowUpload] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
     const [resettingLesson, setResettingLesson] = useState<number | null>(null);
     const [showAISettings, setShowAISettings] = useState(false);
@@ -60,14 +47,8 @@ export default function Dashboard() {
 
     const loadData = async () => {
         try {
-            const [documentsData, lessonsData, statsData] = await Promise.all([
-                documentsAPI.getAll(),
-                lessonsAPI.getAll(),
-                lessonsAPI.getStats()
-            ]);
-            setDocuments(documentsData);
+            const lessonsData = await lessonsAPI.getAll();
             setLessons(lessonsData);
-            setStats(statsData);
         } catch (error) {
             console.error('Erreur lors du chargement des données:', error);
         } finally {
@@ -75,19 +56,6 @@ export default function Dashboard() {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await logout();
-            router.push('/');
-        } catch (error) {
-            console.error('Erreur lors de la déconnexion:', error);
-        }
-    };
-
-    const handleUploadSuccess = () => {
-        loadData();
-        setShowUpload(false);
-    };
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -160,12 +128,6 @@ export default function Dashboard() {
         }
     };
 
-    const getProgressColor = (progress: number) => {
-        if (progress === 100) return 'bg-green-600';
-        if (progress >= 75) return 'bg-orange-primary';
-        if (progress >= 50) return 'bg-yellow-500';
-        return 'bg-blue-600';
-    };
 
     const getScoreColor = (score: number) => {
         if (score >= 90) return 'text-green-600';
@@ -394,7 +356,7 @@ export default function Dashboard() {
                                     Génération en cours...
                                 </Typography>
                                 <Typography variant="body" color="muted">
-                                    L'IA analyse votre document et génère des questions personnalisées
+                                    L&apos;IA analyse votre document et génère des questions personnalisées
                                 </Typography>
                             </div>
                             <div className="flex items-center justify-center space-x-2">

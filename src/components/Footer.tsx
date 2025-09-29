@@ -18,8 +18,8 @@ const Footer: React.FC = () => {
                             <span className="text-xl font-bold text-gray-900">Révisia</span>
                         </div>
                         <p className="text-gray-600 mb-4 max-w-md">
-                            Transformez vos documents en questions flash personnalisées avec l'IA.
-                            Optimisez vos révisions et améliorez vos performances d'apprentissage.
+                            Transformez vos documents en questions flash personnalisées avec l&apos;IA.
+                            Optimisez vos révisions et améliorez vos performances d&apos;apprentissage.
                         </p>
                         <div className="flex space-x-4">
                             <a
@@ -105,7 +105,7 @@ const Footer: React.FC = () => {
                                     href="/help"
                                     className="text-gray-600 hover:text-orange-600 transition-colors"
                                 >
-                                    Centre d'aide
+                                    Centre d&apos;aide
                                 </a>
                             </li>
                             <li>
@@ -129,7 +129,7 @@ const Footer: React.FC = () => {
                                     href="/terms"
                                     className="text-gray-600 hover:text-orange-600 transition-colors"
                                 >
-                                    Conditions d'utilisation
+                                    Conditions d&apos;utilisation
                                 </a>
                             </li>
                         </ul>

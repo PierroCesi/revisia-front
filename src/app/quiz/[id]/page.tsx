@@ -4,9 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { documentsAPI, lessonsAPI, Question, Document } from '@/lib/api';
+import { lessonsAPI, Question, Document } from '@/lib/api';
 import { Button, Card, Typography, Badge } from '@/components/ui';
-import { Brain, ArrowLeft, ArrowRight, CheckCircle, RotateCcw } from 'lucide-react';
+import { Brain, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
 import ConfettiAnimation from '@/components/ConfettiAnimation';
 
 interface QuizPageProps {
@@ -198,7 +198,7 @@ export default function QuizPage({ params }: QuizPageProps) {
                             Quiz non trouvé
                         </Typography>
                         <Typography variant="body" color="muted">
-                            Ce quiz n'existe pas ou a été supprimé
+                            Ce quiz n&apos;existe pas ou a été supprimé
                         </Typography>
                         <Link href="/dashboard">
                             <Button className="bg-orange-primary text-white hover:bg-orange-700">

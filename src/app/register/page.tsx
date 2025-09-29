@@ -126,7 +126,7 @@ export default function RegisterPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-2">
-                                    Niveau d'éducation
+                                    Niveau d&apos;éducation
                                 </label>
                                 <select
                                     {...register('education_level')}
@@ -159,7 +159,7 @@ export default function RegisterPage() {
                                         <option value="Master">Master</option>
                                         <option value="Master Pro">Master Pro</option>
                                         <option value="Doctorat">Doctorat</option>
-                                        <option value="École d'ingénieur">École d'ingénieur</option>
+                                        <option value="École d&apos;ingénieur">École d&apos;ingénieur</option>
                                         <option value="École de commerce">École de commerce</option>
                                         <option value="École spécialisée">École spécialisée</option>
                                         <option value="Formation continue">Formation continue</option>
@@ -167,7 +167,7 @@ export default function RegisterPage() {
 
                                     <optgroup label="👨‍💼 Professionnel">
                                         <option value="En activité">En activité</option>
-                                        <option value="En recherche d'emploi">En recherche d'emploi</option>
+                                        <option value="En recherche d&apos;emploi">En recherche d&apos;emploi</option>
                                         <option value="Retraité">Retraité</option>
                                     </optgroup>
 
