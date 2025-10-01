@@ -88,3 +88,4 @@ export default function ConfettiAnimation({ isActive, onComplete }: ConfettiAnim
         </div>
     );
 }
+

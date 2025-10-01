@@ -8,6 +8,7 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     register: (data: RegisterData) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
     loading: boolean;
 }
 
@@ -64,11 +65,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
     };
 
+    const refreshUser = async () => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            try {
+                const userData = await authAPI.getProfile();
+                setUser(userData);
+            } catch {
+                // Si le token est invalide, on déconnecte l'utilisateur
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                setUser(null);
+            }
+        }
+    };
+
     const value = {
         user,
         login,
         register,
         logout,
+        refreshUser,
         loading,
     };
 

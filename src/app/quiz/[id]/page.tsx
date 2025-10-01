@@ -1,23 +1,32 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { lessonsAPI, Question, Document } from '@/lib/api';
-import { Button, Card, Typography, Badge } from '@/components/ui';
-import { Brain, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
+import { Button, Card, Typography, Badge, ErrorAlert } from '@/components/ui';
+import { Brain, ArrowLeft, ArrowRight, RotateCcw, UserPlus, Lock } from 'lucide-react';
 import ConfettiAnimation from '@/components/ConfettiAnimation';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useGuestSession } from '@/hooks/useGuestSession';
 
 interface QuizPageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 export default function QuizPage({ params }: QuizPageProps) {
     const { user, loading } = useAuth();
+    const { refreshRoleInfo } = useUserRole();
+    const { sessionId, isGuest, createGuestSession } = useGuestSession();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const { id } = use(params);
+
+    // Récupérer session_id depuis l'URL
+    const urlSessionId = searchParams.get('session_id');
     const [questions, setQuestions] = useState<Question[]>([]);
     const [document, setDocument] = useState<Document | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -28,19 +37,55 @@ export default function QuizPage({ params }: QuizPageProps) {
     const [submittingAnswers, setSubmittingAnswers] = useState(false);
     const [resettingQuiz, setResettingQuiz] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [guestResults, setGuestResults] = useState<{
+        lesson_id: number;
+        lesson_title: string;
+        is_completed: boolean;
+        total_questions: number;
+        answered_questions: number;
+        correct_answers: number;
+        score_percentage: number;
+        session_id: string;
+        can_see_results: boolean;
+    } | null>(null);
+
+    // État local pour détecter si on est invité
+    const [isGuestLocal, setIsGuestLocal] = useState(false);
+
+    // Détecter si on est invité
+    useEffect(() => {
+        const hasToken = !!localStorage.getItem('access_token');
+        const hasGuestSession = !!localStorage.getItem('guest_session_id');
+        const isGuestDetected = !hasToken || hasGuestSession;
+
+        console.log('Détection invité:', { hasToken, hasGuestSession, isGuestDetected });
+        setIsGuestLocal(isGuestDetected);
+    }, [loading, user]);
 
     useEffect(() => {
-        if (!loading && !user) {
+        // Debug: afficher l'état actuel
+        console.log('Quiz Page - État:', { loading, user: !!user, isGuest, isGuestLocal, sessionId });
+
+        // Ne rediriger que si on n'est ni connecté ni invité ET que le chargement est terminé
+        if (!loading && !user && !isGuest && !isGuestLocal) {
+            console.log('Redirection vers login - pas d\'utilisateur et pas invité');
             router.push('/login');
         }
-    }, [user, loading, router]);
+    }, [user, loading, isGuest, isGuestLocal, router]);
 
     useEffect(() => {
-        if (user && params.id) {
+        console.log('Quiz Page - Chargement:', { user: !!user, isGuest, isGuestLocal, id, sessionId, urlSessionId });
+
+        if ((user || isGuest || isGuestLocal) && id) {
             const loadQuiz = async () => {
                 try {
-                    const lessonId = parseInt(params.id);
-                    const lessonData = await lessonsAPI.getById(lessonId);
+                    setError(null);
+                    const lessonId = parseInt(id);
+                    // Utiliser sessionId de l'URL en priorité, sinon celui du localStorage
+                    const currentSessionId = urlSessionId || sessionId;
+                    console.log('Chargement du quiz:', { lessonId, currentSessionId });
+                    const lessonData = await lessonsAPI.getById(lessonId, currentSessionId || undefined);
 
                     setDocument({
                         id: lessonData.lesson.id,
@@ -49,15 +94,39 @@ export default function QuizPage({ params }: QuizPageProps) {
                         created_at: lessonData.lesson.created_at
                     });
                     setQuestions(lessonData.questions);
-                } catch (error) {
+
+                    // Si on est invité et qu'on reçoit un session_id, le sauvegarder
+                    if ((isGuest || isGuestLocal) && lessonData.session_id && !currentSessionId) {
+                        createGuestSession(lessonData.session_id);
+                    }
+
+                    // Rafraîchir les informations de rôle après le début du quiz (seulement pour les utilisateurs connectés)
+                    if (user) {
+                        refreshRoleInfo();
+                    }
+                } catch (error: unknown) {
                     console.error('Erreur lors du chargement du quiz:', error);
+
+                    // Extraire le message d'erreur de la réponse
+                    let errorMessage = 'Erreur lors du chargement du quiz.';
+
+                    const errorWithResponse = error as { response?: { data?: { error?: string; details?: string } }; message?: string };
+                    if (errorWithResponse?.response?.data?.error) {
+                        errorMessage = errorWithResponse.response.data.error;
+                    } else if (errorWithResponse?.response?.data?.details) {
+                        errorMessage = errorWithResponse.response.data.details;
+                    } else if (errorWithResponse?.message) {
+                        errorMessage = errorWithResponse.message;
+                    }
+
+                    setError(errorMessage);
                 } finally {
                     setQuizLoading(false);
                 }
             };
             loadQuiz();
         }
-    }, [user, params.id]);
+    }, [user, isGuest, isGuestLocal, id, urlSessionId, createGuestSession, refreshRoleInfo]);
 
     const handleAnswerSelect = (questionId: number, answerId: number) => {
         setSelectedAnswers(prev => ({
@@ -74,11 +143,13 @@ export default function QuizPage({ params }: QuizPageProps) {
     };
 
     const submitAllAnswers = async () => {
-        if (!user || !params.id) return;
+        if ((!user && !isGuest && !isGuestLocal) || !id) return;
 
         setSubmittingAnswers(true);
         try {
-            const lessonId = parseInt(params.id);
+            const lessonId = parseInt(id);
+            // Utiliser sessionId de l'URL en priorité, sinon celui du localStorage
+            const currentSessionId = urlSessionId || sessionId;
 
             // Soumettre toutes les réponses
             for (const question of questions) {
@@ -87,7 +158,8 @@ export default function QuizPage({ params }: QuizPageProps) {
                     if (selectedAnswerId) {
                         await lessonsAPI.submitAnswer(lessonId, {
                             question_id: question.id,
-                            selected_answer_id: selectedAnswerId
+                            selected_answer_id: selectedAnswerId,
+                            ...((isGuest || isGuestLocal) && currentSessionId ? { session_id: currentSessionId } : {})
                         });
                     }
                 } else {
@@ -95,19 +167,28 @@ export default function QuizPage({ params }: QuizPageProps) {
                     if (openAnswer) {
                         await lessonsAPI.submitAnswer(lessonId, {
                             question_id: question.id,
-                            open_answer: openAnswer
+                            open_answer: openAnswer,
+                            ...((isGuest || isGuestLocal) && currentSessionId ? { session_id: currentSessionId } : {})
                         });
                     }
                 }
             }
 
+            // Si on est invité, récupérer les résultats (sans les afficher)
+            if ((isGuest || isGuestLocal) && currentSessionId) {
+                const results = await lessonsAPI.getGuestResults(lessonId, currentSessionId);
+                setGuestResults(results);
+            }
+
             setShowResults(true);
 
-            // Vérifier si le score est >= 80% pour déclencher les confettis
-            const { correct, total } = getScore();
-            const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
-            if (percentage >= 80) {
-                setShowConfetti(true);
+            // Vérifier si le score est >= 80% pour déclencher les confettis (seulement pour les utilisateurs connectés)
+            if (user) {
+                const { correct, total } = getScore();
+                const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+                if (percentage >= 80) {
+                    setShowConfetti(true);
+                }
             }
         } catch (error) {
             console.error('Erreur lors de la soumission des réponses:', error);
@@ -131,12 +212,12 @@ export default function QuizPage({ params }: QuizPageProps) {
     };
 
     const resetQuiz = async () => {
-        if (!params.id) return;
+        if (!id) return;
 
         setResettingQuiz(true);
         setShowConfetti(false); // Réinitialiser les confettis
         try {
-            const lessonId = parseInt(params.id);
+            const lessonId = parseInt(id);
             await lessonsAPI.reset(lessonId);
 
             // Réinitialiser l'état du quiz
@@ -186,7 +267,41 @@ export default function QuizPage({ params }: QuizPageProps) {
         );
     }
 
-    if (!user || !document || questions.length === 0) {
+    // Afficher l'erreur si elle existe (limite de tentatives, etc.)
+    if (error) {
+        return (
+            <div className="min-h-screen dashboard-gradient flex items-center justify-center">
+                <Card className="widget-card p-8 text-center max-w-md">
+                    <div className="space-y-4">
+                        <div className="w-16 h-16 bg-red-soft rounded-xl flex items-center justify-center mx-auto">
+                            <Brain className="w-8 h-8 text-red-700" />
+                        </div>
+                        <Typography variant="h4" className="font-bold text-foreground">
+                            Accès refusé
+                        </Typography>
+                        <Typography variant="body" color="muted">
+                            {error}
+                        </Typography>
+                        <div className="flex space-x-3 justify-center">
+                            <Link href="/dashboard">
+                                <Button variant="outline">
+                                    <ArrowLeft className="w-4 h-4 mr-2" />
+                                    Retour au tableau de bord
+                                </Button>
+                            </Link>
+                            <Link href="/pricing">
+                                <Button className="bg-orange-primary text-white hover:bg-orange-700">
+                                    Passer à Premium
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
+    if ((!user && !isGuest && !isGuestLocal) || !document || questions.length === 0) {
         return (
             <div className="min-h-screen dashboard-gradient flex items-center justify-center">
                 <Card className="widget-card p-8 text-center">
@@ -213,6 +328,69 @@ export default function QuizPage({ params }: QuizPageProps) {
     }
 
     if (showResults) {
+        // Affichage différent pour les invités et les utilisateurs connectés
+        if ((isGuest || isGuestLocal) && guestResults) {
+            return (
+                <div className="min-h-screen dashboard-gradient relative overflow-hidden">
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        <div className="absolute top-20 left-10 w-32 h-32 bg-blue-soft/20 rounded-full blur-xl animate-float"></div>
+                        <div className="absolute top-40 right-20 w-24 h-24 bg-orange-soft/20 rounded-full blur-xl animate-float-delayed"></div>
+                        <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-purple-soft/20 rounded-full blur-xl animate-float"></div>
+                    </div>
+
+                    {/* Résultats pour invités - sans afficher le score */}
+                    <main className="max-w-4xl mx-auto px-6 py-8 relative z-10">
+                        <Card className="widget-card p-8 text-center">
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <div className="w-16 h-16 bg-orange-soft rounded-xl flex items-center justify-center mx-auto">
+                                        <Lock className="w-8 h-8 text-orange-700" />
+                                    </div>
+                                    <Typography variant="h2" className="text-3xl font-bold text-foreground">
+                                        Quiz Terminé !
+                                    </Typography>
+                                    <Typography variant="h4" className="text-orange-700">
+                                        {document?.title}
+                                    </Typography>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <Typography variant="body" className="text-lg text-muted-foreground">
+                                        Quiz terminé ! Vous avez répondu à {guestResults.answered_questions} questions sur {guestResults.total_questions}.
+                                    </Typography>
+
+                                    <div className="bg-orange-soft/30 rounded-xl p-6 border border-orange-200">
+                                        <Typography variant="body" className="text-orange-800 font-medium">
+                                            🎯 Vous avez répondu à {guestResults.answered_questions} questions sur {guestResults.total_questions}
+                                        </Typography>
+                                        <Typography variant="body" className="text-orange-700 mt-2">
+                                            Inscrivez-vous pour voir votre score détaillé et sauvegarder vos résultats !
+                                        </Typography>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                    <Link href="/register">
+                                        <Button className="bg-orange-primary text-white hover:bg-orange-700">
+                                            <UserPlus className="w-4 h-4 mr-2" />
+                                            S&apos;inscrire pour voir les résultats
+                                        </Button>
+                                    </Link>
+                                    <Link href="/">
+                                        <Button variant="outline" className="border-orange-200 text-orange-700 hover:bg-orange-50">
+                                            <ArrowLeft className="w-4 h-4 mr-2" />
+                                            Retour à l&apos;accueil
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </Card>
+                    </main>
+                </div>
+            );
+        }
+
+        // Affichage normal pour les utilisateurs connectés
         const { correct, total } = getScore();
         const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
 
@@ -226,24 +404,6 @@ export default function QuizPage({ params }: QuizPageProps) {
                     <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-purple-soft/20 rounded-full blur-xl animate-float"></div>
                 </div>
 
-                {/* Navigation */}
-                <nav className="glass-card border-b-0 sticky top-0 z-50">
-                    <div className="max-w-7xl mx-auto px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-                                    <Brain className="w-6 h-6 text-primary-foreground" />
-                                </div>
-                                <Link href="/dashboard">
-                                    <Typography variant="h4" className="font-bold text-foreground">
-                                        Révisia
-                                    </Typography>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-
                 {/* Results */}
                 <main className="max-w-4xl mx-auto px-6 py-8 relative z-10">
                     <Card className="widget-card p-8 text-center">
@@ -253,7 +413,7 @@ export default function QuizPage({ params }: QuizPageProps) {
                                     Résultats du Quiz
                                 </Typography>
                                 <Typography variant="h4" className="text-orange-700">
-                                    {document.title}
+                                    {document?.title}
                                 </Typography>
                             </div>
 
@@ -298,37 +458,19 @@ export default function QuizPage({ params }: QuizPageProps) {
                 <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-purple-soft/20 rounded-full blur-xl animate-float"></div>
             </div>
 
-            {/* Navigation */}
-            <nav className="glass-card border-b-0 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-                                <Brain className="w-6 h-6 text-primary-foreground" />
-                            </div>
-                            <Link href="/dashboard">
-                                <Typography variant="h4" className="font-bold text-foreground">
-                                    Révisia
-                                </Typography>
-                            </Link>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                            <Badge variant="secondary" className="bg-orange-soft text-orange-700">
-                                Question {currentQuestionIndex + 1} sur {questions.length}
-                            </Badge>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
             {/* Progress Bar */}
             <div className="glass-card border-b-0">
                 <div className="max-w-4xl mx-auto px-6 py-4">
-                    <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                            className="h-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full transition-all duration-500 ease-out"
-                            style={{ width: `${progress}%` }}
-                        ></div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden mr-4">
+                            <div
+                                className="h-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        </div>
+                        <Badge variant="secondary" className="bg-orange-soft text-orange-700">
+                            Question {currentQuestionIndex + 1} sur {questions.length}
+                        </Badge>
                     </div>
                 </div>
             </div>
@@ -413,6 +555,18 @@ export default function QuizPage({ params }: QuizPageProps) {
                     </Button>
                 </div>
             </div>
+
+            {/* Error Alert */}
+            {error && (
+                <ErrorAlert
+                    message={error}
+                    onDismiss={() => setError(null)}
+                    onRetry={() => {
+                        setError(null);
+                        window.location.reload();
+                    }}
+                />
+            )}
         </div>
     );
 }

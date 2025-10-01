@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -43,7 +43,23 @@ export interface User {
     first_name: string;
     last_name: string;
     education_level?: string;
+    is_premium?: boolean;
     created_at: string;
+}
+
+export interface UserRoleInfo {
+    role: 'guest' | 'free' | 'premium';
+    can_create_quiz: boolean;
+    can_attempt_quiz: boolean;
+    quiz_count_today: number;
+    attempts_count_today: number;
+    limits: {
+        max_questions: number | null;
+        max_quizzes_per_day: number | null;
+        max_attempts_per_day: number | null;
+        can_save_results: boolean;
+    };
+    user: User | null;
 }
 
 export interface AuthResponse {
@@ -133,6 +149,7 @@ export interface AISettings {
     difficulty: 'easy' | 'medium' | 'hard';
     questionTypes: ('qcm' | 'open')[];
     educationLevel?: string;
+    instructions?: string;
 }
 
 export const authAPI = {
@@ -157,10 +174,50 @@ export const authAPI = {
         const response = await api.get('/auth/profile/');
         return response.data;
     },
+
+    updateProfile: async (data: { first_name?: string; last_name?: string; username?: string; education_level?: string }): Promise<User> => {
+        const response = await api.put('/auth/profile/update/', data, {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        return response.data;
+    },
+
+    getRoleInfo: async (sessionId?: string): Promise<UserRoleInfo> => {
+        const params = sessionId ? { session_id: sessionId } : {};
+        const response = await api.get('/auth/role-info/', { params });
+        return response.data;
+    },
 };
 
 export const documentsAPI = {
-    upload: async (file: File, title?: string, aiSettings?: AISettings): Promise<Document> => {
+    checkGuestLimits: async (sessionId?: string): Promise<{
+        can_upload: boolean;
+        error?: string;
+        details?: string;
+        action?: string;
+    }> => {
+        const params = sessionId ? { session_id: sessionId } : {};
+        const response = await api.get('/auth/role-info/', { params });
+        const roleInfo = response.data;
+
+        // Vérifier les limites pour les invités
+        if (roleInfo.role === 'guest') {
+            if (!roleInfo.can_create_quiz) {
+                return {
+                    can_upload: false,
+                    error: 'Limite d\'utilisation atteinte',
+                    details: 'Vous avez déjà utilisé votre quota gratuit. Inscrivez-vous pour créer plus de quiz et sauvegarder vos résultats.',
+                    action: 'signup_required'
+                };
+            }
+        }
+
+        return { can_upload: true };
+    },
+
+    upload: async (file: File, title?: string, aiSettings?: AISettings): Promise<Document & { lesson_id?: number; session_id?: string; remaining_uses?: number }> => {
         const formData = new FormData();
         formData.append('file', file);
         if (title) {
@@ -172,6 +229,9 @@ export const documentsAPI = {
             formData.append('question_types', JSON.stringify(aiSettings.questionTypes));
             if (aiSettings.educationLevel) {
                 formData.append('education_level', aiSettings.educationLevel);
+            }
+            if (aiSettings.instructions) {
+                formData.append('instructions', aiSettings.instructions);
             }
         }
 
@@ -205,15 +265,17 @@ export const lessonsAPI = {
         return response.data;
     },
 
-    getById: async (lessonId: number): Promise<{ lesson: Lesson; questions: Question[] }> => {
-        const response = await api.get(`/auth/lessons/${lessonId}/`);
+    getById: async (lessonId: number, sessionId?: string): Promise<{ lesson: Lesson; questions: Question[]; session_id?: string }> => {
+        const params = sessionId ? { session_id: sessionId } : {};
+        const response = await api.get(`/auth/lessons/${lessonId}/`, { params });
         return response.data;
     },
 
-    submitAnswer: async (lessonId: number, data: SubmitAnswerData): Promise<{
+    submitAnswer: async (lessonId: number, data: SubmitAnswerData & { session_id?: string }): Promise<{
         is_correct: boolean;
         lesson_progress: number;
         lesson_score: number;
+        session_id?: string;
     }> => {
         const response = await api.post(`/auth/lessons/${lessonId}/submit-answer/`, data);
         return response.data;
@@ -231,6 +293,39 @@ export const lessonsAPI = {
 
     getStats: async (): Promise<LessonStats> => {
         const response = await api.get('/auth/lessons/stats/');
+        return response.data;
+    },
+
+    // Fonctions pour les invités
+    getGuestResults: async (lessonId: number, sessionId: string): Promise<{
+        lesson_id: number;
+        lesson_title: string;
+        is_completed: boolean;
+        total_questions: number;
+        answered_questions: number;
+        correct_answers: number;
+        score_percentage: number;
+        session_id: string;
+        can_see_results: boolean;
+        message: string;
+    }> => {
+        const response = await api.get(`/auth/lessons/${lessonId}/guest-results/`, {
+            params: { session_id: sessionId }
+        });
+        return response.data;
+    },
+
+    transferGuestData: async (sessionId: string): Promise<{
+        success: boolean;
+        message: string;
+        transferred_lessons: Array<{
+            id: number;
+            title: string;
+            score: number;
+            status: string;
+        }>;
+    }> => {
+        const response = await api.post('/auth/transfer-guest-data/', { session_id: sessionId });
         return response.data;
     },
 };

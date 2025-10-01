@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { documentsAPI, lessonsAPI, Lesson } from '@/lib/api';
-import { Button, Card, Typography, Badge } from '@/components/ui';
+import { Button, Card, Typography, Badge, ErrorAlert } from '@/components/ui';
 import {
     Upload,
     FileText,
@@ -16,6 +16,7 @@ import {
 import Link from 'next/link';
 import AISettingsModal, { AISettings } from '@/components/AISettingsModal';
 import ScoreChartModal from '@/components/ScoreChartModal';
+import RoleLimits from '@/components/RoleLimits';
 
 // Helper function pour mapper les difficultés
 const getDifficultyLabel = (difficulty: string) => {
@@ -36,6 +37,7 @@ export default function Dashboard() {
     const [showAISettings, setShowAISettings] = useState(false);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [showScoreChart, setShowScoreChart] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
     const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
 
@@ -87,11 +89,13 @@ export default function Dashboard() {
     const uploadFile = async (file: File) => {
         try {
             console.log("Uploading file:", file.name);
+            setError(null); // Clear any previous errors
             // Au lieu d'uploader directement, on ouvre la popup de configuration
             setUploadedFile(file);
             setShowAISettings(true);
         } catch (error) {
             console.error("Upload error:", error);
+            setError('Erreur lors de la préparation du fichier. Veuillez réessayer.');
         }
     };
 
@@ -100,6 +104,7 @@ export default function Dashboard() {
 
         try {
             setIsGeneratingQuestions(true);
+            setError(null);
             console.log("Uploading file with settings:", settings);
             // Ici on enverra les paramètres au backend
             await documentsAPI.upload(uploadedFile, undefined, settings);
@@ -107,8 +112,22 @@ export default function Dashboard() {
             loadData(); // Recharger les données
             setUploadedFile(null);
             setShowAISettings(false);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Upload error:", error);
+
+            // Extraire le message d'erreur de la réponse
+            let errorMessage = 'Erreur lors de la génération du quiz. Veuillez réessayer.';
+
+            const errorWithResponse = error as { response?: { data?: { error?: string; details?: string } }; message?: string };
+            if (errorWithResponse?.response?.data?.error) {
+                errorMessage = errorWithResponse.response.data.error;
+            } else if (errorWithResponse?.response?.data?.details) {
+                errorMessage = errorWithResponse.response.data.details;
+            } else if (errorWithResponse?.message) {
+                errorMessage = errorWithResponse.message;
+            }
+
+            setError(errorMessage);
         } finally {
             setIsGeneratingQuestions(false);
         }
@@ -175,6 +194,9 @@ export default function Dashboard() {
                         Continuez vos révisions et créez de nouvelles leçons pour progresser
                     </Typography>
                 </section>
+
+                {/* Role Limits */}
+                <RoleLimits />
 
                 {/* Upload Section */}
                 <section>
@@ -329,6 +351,7 @@ export default function Dashboard() {
                 }}
                 onConfirm={handleAISettingsConfirm}
                 fileName={uploadedFile?.name || ''}
+                userEducationLevel={user?.education_level}
             />
 
             {/* Score Chart Modal */}
@@ -372,6 +395,20 @@ export default function Dashboard() {
                         </div>
                     </Card>
                 </div>
+            )}
+
+            {/* Error Alert */}
+            {error && (
+                <ErrorAlert
+                    message={error}
+                    onDismiss={() => setError(null)}
+                    onRetry={() => {
+                        setError(null);
+                        if (uploadedFile) {
+                            setShowAISettings(true);
+                        }
+                    }}
+                />
             )}
         </div>
     );

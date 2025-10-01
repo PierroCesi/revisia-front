@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Button, Card, Badge } from "@/components/ui"
+import { Button, Card, Badge, Typography, LoadingSpinner, ErrorAlert } from "@/components/ui"
 import {
     Camera,
     FileText,
@@ -21,13 +21,45 @@ import {
     Play,
     ImageIcon,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/AuthContext"
+import { useUserRole } from "@/hooks/useUserRole"
+import { useGuestSession } from "@/hooks/useGuestSession"
 import Link from "next/link"
+import AISettingsModal, { AISettings } from "@/components/AISettingsModal"
 
 export default function HomePage() {
     const [isDragOver, setIsDragOver] = useState(false)
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+    const [showAISettings, setShowAISettings] = useState(false)
+    const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [guestLimitError, setGuestLimitError] = useState<string | null>(null)
     const { user, loading } = useAuth()
+    const { isGuest, canCreateQuiz } = useUserRole()
+    const { sessionId, isGuest: isGuestSession } = useGuestSession()
+
+    // Vérifier les limites invitées au chargement de la page
+    useEffect(() => {
+        const checkGuestLimits = async () => {
+            if (!user && (isGuest || isGuestSession)) {
+                try {
+                    const { documentsAPI } = await import('@/lib/api')
+                    const result = await documentsAPI.checkGuestLimits(sessionId || undefined)
+
+                    if (!result.can_upload) {
+                        setGuestLimitError(result.details || result.error || 'Limite atteinte')
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la vérification des limites:', error)
+                }
+            }
+        }
+
+        if (!loading) {
+            checkGuestLimits()
+        }
+    }, [user, loading, isGuest, isGuestSession, sessionId])
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault()
@@ -42,13 +74,97 @@ export default function HomePage() {
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault()
         setIsDragOver(false)
-        // Handle file drop logic here
-        console.log("[v0] Files dropped:", e.dataTransfer.files)
+
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            const file = e.dataTransfer.files[0]
+            handleFileUpload(file)
+        }
     }
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Handle file selection logic here
-        console.log("[v0] Files selected:", e.target.files)
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+            handleFileUpload(file)
+        }
+    }
+
+    const handleFileUpload = async (file: File) => {
+        // Vérifier les limites avant l'upload
+        if (!user && (isGuest || isGuestSession)) {
+            try {
+                const { documentsAPI } = await import('@/lib/api')
+                const result = await documentsAPI.checkGuestLimits(sessionId || undefined)
+
+                if (!result.can_upload) {
+                    setGuestLimitError(result.details || result.error || 'Limite atteinte')
+                    return
+                }
+            } catch (error) {
+                console.error('Erreur lors de la vérification des limites:', error)
+                setError('Erreur lors de la vérification des limites. Veuillez réessayer.')
+                return
+            }
+        }
+
+        if (!canCreateQuiz) {
+            setError('Limite de quiz atteinte. Inscrivez-vous pour créer plus de quiz !')
+            return
+        }
+
+        setError(null) // Clear any previous errors
+        setGuestLimitError(null) // Clear guest limit errors
+        setUploadedFile(file)
+        setShowAISettings(true)
+    }
+
+    const handleAISettingsConfirm = async (settings: AISettings) => {
+        if (!uploadedFile) return
+
+        try {
+            setIsGeneratingQuestions(true)
+            setError(null)
+
+            // Appeler l'API pour uploader le fichier
+            const { documentsAPI } = await import('@/lib/api')
+            const uploadResult = await documentsAPI.upload(uploadedFile, undefined, settings)
+
+            setShowAISettings(false)
+            setUploadedFile(null)
+
+            // Rediriger vers le quiz pour tous les utilisateurs
+            if (uploadResult.lesson_id) {
+                // Rediriger vers le quiz avec l'ID de la leçon
+                let quizUrl = `/quiz/${uploadResult.lesson_id}`
+
+                // Ajouter session_id pour les invités
+                if ((isGuest || isGuestSession) && uploadResult.session_id) {
+                    quizUrl += `?session_id=${uploadResult.session_id}`
+                }
+
+                window.location.href = quizUrl
+            } else {
+                // Fallback vers le dashboard si pas d'ID de leçon
+                window.location.href = '/dashboard'
+            }
+        } catch (error: unknown) {
+            console.error('Erreur lors de l\'upload:', error)
+
+            // Extraire le message d'erreur de la réponse
+            let errorMessage = 'Erreur lors de la génération du quiz. Veuillez réessayer.'
+
+            const errorWithResponse = error as { response?: { data?: { error?: string; details?: string } }; message?: string };
+            if (errorWithResponse?.response?.data?.error) {
+                errorMessage = errorWithResponse.response.data.error
+            } else if (errorWithResponse?.response?.data?.details) {
+                errorMessage = errorWithResponse.response.data.details
+            } else if (errorWithResponse?.message) {
+                errorMessage = errorWithResponse.message
+            }
+
+            setError(errorMessage)
+        } finally {
+            setIsGeneratingQuestions(false)
+        }
     }
 
     if (loading) {
@@ -90,11 +206,11 @@ export default function HomePage() {
                                 </div>
 
                                 <div
-                                    className={`upload-zone rounded-2xl p-8 text-center cursor-pointer ${isDragOver ? "drag-over" : ""}`}
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                    onDrop={handleDrop}
-                                    onClick={() => document.getElementById("file-input")?.click()}
+                                    className={`upload-zone rounded-2xl p-8 text-center ${guestLimitError ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isDragOver ? "drag-over" : ""}`}
+                                    onDragOver={guestLimitError ? undefined : handleDragOver}
+                                    onDragLeave={guestLimitError ? undefined : handleDragLeave}
+                                    onDrop={guestLimitError ? undefined : handleDrop}
+                                    onClick={guestLimitError ? undefined : () => document.getElementById("file-input")?.click()}
                                 >
                                     <input
                                         id="file-input"
@@ -136,6 +252,39 @@ export default function HomePage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Message d'erreur pour les limites invitées */}
+                                {guestLimitError && (
+                                    <div className="bg-red-soft/30 border border-red-200 rounded-xl p-4">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="w-8 h-8 bg-red-soft rounded-lg flex items-center justify-center">
+                                                <span className="text-red-700 text-sm">⚠️</span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <Typography variant="body" className="font-medium text-red-800">
+                                                    Limite d&apos;utilisation atteinte
+                                                </Typography>
+                                                <Typography variant="body" className="text-red-700 text-sm mt-1">
+                                                    {guestLimitError}
+                                                </Typography>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                                            <Link href="/register">
+                                                <Button className="bg-orange-primary text-white hover:bg-orange-700 w-full sm:w-auto">
+                                                    S&apos;inscrire gratuitement
+                                                </Button>
+                                            </Link>
+                                            <Button
+                                                variant="outline"
+                                                className="border-red-200 text-red-700 hover:bg-red-50 w-full sm:w-auto"
+                                                onClick={() => setGuestLimitError(null)}
+                                            >
+                                                Fermer
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     {user ? (
@@ -411,6 +560,56 @@ export default function HomePage() {
                 </section>
             </main>
 
+            {/* Error Alert */}
+            {error && (
+                <ErrorAlert
+                    message={error}
+                    onDismiss={() => setError(null)}
+                    onRetry={() => {
+                        setError(null)
+                        if (uploadedFile) {
+                            setShowAISettings(true)
+                        }
+                    }}
+                />
+            )}
+
+            {/* AI Settings Modal */}
+            <AISettingsModal
+                isOpen={showAISettings}
+                onClose={() => {
+                    setShowAISettings(false)
+                    setUploadedFile(null)
+                }}
+                onConfirm={handleAISettingsConfirm}
+                fileName={uploadedFile?.name || ''}
+                userEducationLevel={user?.education_level}
+            />
+
+
+            {/* Loading Modal for Question Generation */}
+            {isGeneratingQuestions && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <Card className="widget-card p-8 text-center max-w-md w-full">
+                        <div className="space-y-4">
+                            <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto">
+                                <Brain className="w-8 h-8 text-white animate-pulse" />
+                            </div>
+                            <div>
+                                <Typography variant="h4" className="font-bold text-gray-900 mb-2">
+                                    Génération en cours...
+                                </Typography>
+                                <Typography variant="body" className="text-gray-600">
+                                    L&apos;IA analyse votre document et génère des questions personnalisées
+                                </Typography>
+                            </div>
+                            <div className="flex justify-center">
+                                <LoadingSpinner size="lg" />
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
         </div>
     )
 }

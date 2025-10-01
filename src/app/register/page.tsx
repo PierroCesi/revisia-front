@@ -8,6 +8,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button, Card, Input, Typography, Alert } from '@/components/ui';
+import { useGuestSession } from '@/hooks/useGuestSession';
+import { lessonsAPI } from '@/lib/api';
+import { CheckCircle, Gift } from 'lucide-react';
 
 const registerSchema = z.object({
     email: z.string().email('Email invalide'),
@@ -27,7 +30,16 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [transferringData, setTransferringData] = useState(false);
+    const [transferSuccess, setTransferSuccess] = useState(false);
+    const [transferredLessons, setTransferredLessons] = useState<{
+        id: number;
+        title: string;
+        score: number;
+        status: string;
+    }[]>([]);
     const { register: registerUser } = useAuth();
+    const { sessionId, isGuest, clearGuestSession } = useGuestSession();
     const router = useRouter();
 
     const {
@@ -42,9 +54,39 @@ export default function RegisterPage() {
         setIsLoading(true);
         setError('');
 
+        console.log('🔍 Register - isGuest:', isGuest, 'sessionId:', sessionId);
+
         try {
+            // Créer le compte utilisateur
             await registerUser(data);
-            router.push('/dashboard');
+
+            // Si on était invité, transférer les données
+            if (isGuest && sessionId) {
+                console.log('🔄 Début du transfert des données...');
+                setTransferringData(true);
+                try {
+                    const transferResult = await lessonsAPI.transferGuestData(sessionId);
+                    setTransferredLessons(transferResult.transferred_lessons);
+                    setTransferSuccess(true);
+
+                    // Nettoyer la session invité
+                    clearGuestSession();
+
+                    // Attendre un peu pour montrer le succès du transfert
+                    setTimeout(() => {
+                        router.push('/dashboard');
+                    }, 2000);
+                } catch (transferError) {
+                    console.error('❌ Erreur lors du transfert des données:', transferError);
+                    // Même si le transfert échoue, on continue vers le dashboard
+                    router.push('/dashboard');
+                } finally {
+                    setTransferringData(false);
+                }
+            } else {
+                console.log('❌ Pas de transfert - isGuest:', isGuest, 'sessionId:', sessionId);
+                router.push('/dashboard');
+            }
         } catch (err: unknown) {
             setError((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erreur lors de l\'inscription');
         } finally {
@@ -76,6 +118,44 @@ export default function RegisterPage() {
                         </Link>
                     </Typography>
                 </div>
+
+                {/* Message pour les invités */}
+                {isGuest && sessionId && (
+                    <Card padding="lg" className="mb-6">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-orange-soft rounded-xl flex items-center justify-center">
+                                <Gift className="w-5 h-5 text-orange-700" />
+                            </div>
+                            <div>
+                                <Typography variant="body" className="font-medium text-orange-800">
+                                    🎁 Bonus : Vos résultats seront sauvegardés !
+                                </Typography>
+                                <Typography variant="body" className="text-orange-700 text-sm">
+                                    En vous inscrivant, vous pourrez voir vos résultats détaillés et les conserver.
+                                </Typography>
+                            </div>
+                        </div>
+                    </Card>
+                )}
+
+                {/* Message de succès du transfert */}
+                {transferSuccess && transferredLessons.length > 0 && (
+                    <Card padding="lg" className="mb-6">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-green-soft rounded-xl flex items-center justify-center">
+                                <CheckCircle className="w-5 h-5 text-green-700" />
+                            </div>
+                            <div>
+                                <Typography variant="body" className="font-medium text-green-800">
+                                    ✅ Données transférées avec succès !
+                                </Typography>
+                                <Typography variant="body" className="text-green-700 text-sm">
+                                    {transferredLessons.length} quiz transféré{transferredLessons.length > 1 ? 's' : ''}. Redirection vers votre tableau de bord...
+                                </Typography>
+                            </div>
+                        </div>
+                    </Card>
+                )}
 
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
                     <Card padding="lg">
@@ -197,12 +277,14 @@ export default function RegisterPage() {
                         <div className="mt-8">
                             <Button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isLoading || transferringData}
                                 variant="primary"
                                 size="lg"
                                 className="w-full"
                             >
-                                {isLoading ? 'Création du compte...' : 'Créer mon compte'}
+                                {isLoading ? 'Création du compte...' :
+                                    transferringData ? 'Transfert des données...' :
+                                        'Créer mon compte'}
                             </Button>
                         </div>
                     </Card>

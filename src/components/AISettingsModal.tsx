@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { Button, Card, Typography, Input } from '@/components/ui';
+import { useState, useEffect } from 'react';
+import { Button, Card, Typography, Input, Select, Textarea } from '@/components/ui';
 import { X, Brain, Settings } from 'lucide-react';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface AISettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: (settings: AISettings) => void;
     fileName: string;
+    userEducationLevel?: string;
 }
 
 export interface AISettings {
@@ -16,12 +18,29 @@ export interface AISettings {
     difficulty: 'easy' | 'medium' | 'hard';
     questionTypes: ('qcm' | 'open')[];
     educationLevel?: string;
+    instructions?: string;
 }
 
-export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName }: AISettingsModalProps) {
-    const [questionCount, setQuestionCount] = useState(5);
+export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName, userEducationLevel }: AISettingsModalProps) {
+    const { maxQuestions, isGuest, isFree, isUnlimitedQuestions } = useUserRole();
+    const [questionCount, setQuestionCount] = useState(isUnlimitedQuestions ? 10 : Math.min(5, maxQuestions));
     const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
-    const [educationLevel, setEducationLevel] = useState('');
+    const [educationLevel, setEducationLevel] = useState(userEducationLevel || '');
+    const [instructions, setInstructions] = useState('');
+
+    // Mettre à jour le niveau d'éducation quand userEducationLevel change
+    useEffect(() => {
+        if (userEducationLevel) {
+            setEducationLevel(userEducationLevel);
+        }
+    }, [userEducationLevel]);
+
+    // Ajuster le nombre de questions selon les limites
+    useEffect(() => {
+        if (questionCount > maxQuestions) {
+            setQuestionCount(maxQuestions);
+        }
+    }, [maxQuestions, questionCount]);
 
     if (!isOpen) return null;
 
@@ -30,7 +49,8 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName }
             questionCount,
             difficulty,
             questionTypes: ['qcm'], // Seulement QCM
-            educationLevel: educationLevel || undefined
+            educationLevel: educationLevel || undefined,
+            instructions: instructions.trim() || undefined
         });
         // Ne pas fermer la modal ici, elle sera fermée par le parent après génération
     };
@@ -75,23 +95,23 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName }
                 {/* Content */}
                 <div className="space-y-6">
                     {/* Nombre de questions */}
-                    <div>
-                        <Typography variant="h6" className="font-semibold text-foreground mb-3">
-                            Nombre de questions
-                        </Typography>
-                        <Input
-                            type="number"
-                            min="1"
-                            max="20"
-                            value={questionCount}
-                            onChange={(e) => setQuestionCount(parseInt(e.target.value) || 1)}
-                            className="w-full"
-                            placeholder="5"
-                        />
-                        <Typography variant="caption" color="muted" className="mt-1">
-                            Entre 1 et 20 questions
-                        </Typography>
-                    </div>
+                    <Input
+                        label="Nombre de questions"
+                        type="number"
+                        min="1"
+                        max={isUnlimitedQuestions ? 50 : maxQuestions}
+                        value={questionCount}
+                        onChange={(e) => {
+                            const value = parseInt(e.target.value) || 1;
+                            setQuestionCount(isUnlimitedQuestions ? value : Math.min(value, maxQuestions));
+                        }}
+                        placeholder="5"
+                        helperText={
+                            isGuest ? "Mode test : maximum 5 questions" :
+                                isFree ? "Compte gratuit : maximum 6 questions" :
+                                    "Premium : questions illimitées (recommandé : 10-20)"
+                        }
+                    />
 
                     {/* Difficulté */}
                     <div>
@@ -117,60 +137,73 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName }
                     </div>
 
                     {/* Niveau d'éducation */}
-                    <div>
-                        <Typography variant="h6" className="font-semibold text-foreground mb-3">
-                            Niveau d&apos;éducation
-                        </Typography>
-                        <select
-                            value={educationLevel}
-                            onChange={(e) => setEducationLevel(e.target.value)}
-                            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        >
-                            <option value="">Sélectionnez votre niveau</option>
+                    <Select
+                        label="Niveau d'éducation"
+                        value={educationLevel}
+                        onChange={(e) => setEducationLevel(e.target.value)}
+                        placeholder="Sélectionnez votre niveau"
+                        helperText="Pour adapter les questions à votre niveau"
+                        optGroups={[
+                            {
+                                label: "🏫 Collège",
+                                options: [
+                                    { value: "6ème", label: "6ème" },
+                                    { value: "5ème", label: "5ème" },
+                                    { value: "4ème", label: "4ème" },
+                                    { value: "3ème", label: "3ème" }
+                                ]
+                            },
+                            {
+                                label: "🎓 Lycée",
+                                options: [
+                                    { value: "2nde", label: "2nde" },
+                                    { value: "1ère", label: "1ère" },
+                                    { value: "Terminale", label: "Terminale" },
+                                    { value: "Bac Pro", label: "Bac Pro" },
+                                    { value: "Bac Techno", label: "Bac Techno" },
+                                    { value: "CAP", label: "CAP" }
+                                ]
+                            },
+                            {
+                                label: "🎓 Supérieur",
+                                options: [
+                                    { value: "BTS", label: "BTS" },
+                                    { value: "DUT", label: "DUT" },
+                                    { value: "BUT", label: "BUT" },
+                                    { value: "Licence", label: "Licence" },
+                                    { value: "Licence Pro", label: "Licence Pro" },
+                                    { value: "Master", label: "Master" },
+                                    { value: "Master Pro", label: "Master Pro" },
+                                    { value: "Doctorat", label: "Doctorat" },
+                                    { value: "École d'ingénieur", label: "École d'ingénieur" },
+                                    { value: "École de commerce", label: "École de commerce" },
+                                    { value: "École spécialisée", label: "École spécialisée" },
+                                    { value: "Formation continue", label: "Formation continue" }
+                                ]
+                            },
+                            {
+                                label: "👨‍💼 Professionnel",
+                                options: [
+                                    { value: "En activité", label: "En activité" },
+                                    { value: "En recherche d'emploi", label: "En recherche d'emploi" },
+                                    { value: "Retraité", label: "Retraité" }
+                                ]
+                            }
+                        ]}
+                        options={[
+                            { value: "Autre", label: "Autre" }
+                        ]}
+                    />
 
-                            <optgroup label="🏫 Collège">
-                                <option value="6ème">6ème</option>
-                                <option value="5ème">5ème</option>
-                                <option value="4ème">4ème</option>
-                                <option value="3ème">3ème</option>
-                            </optgroup>
-
-                            <optgroup label="🎓 Lycée">
-                                <option value="2nde">2nde</option>
-                                <option value="1ère">1ère</option>
-                                <option value="Terminale">Terminale</option>
-                                <option value="Bac Pro">Bac Pro</option>
-                                <option value="Bac Techno">Bac Techno</option>
-                                <option value="CAP">CAP</option>
-                            </optgroup>
-
-                            <optgroup label="🎓 Supérieur">
-                                <option value="BTS">BTS</option>
-                                <option value="DUT">DUT</option>
-                                <option value="BUT">BUT</option>
-                                <option value="Licence">Licence</option>
-                                <option value="Licence Pro">Licence Pro</option>
-                                <option value="Master">Master</option>
-                                <option value="Master Pro">Master Pro</option>
-                                <option value="Doctorat">Doctorat</option>
-                                <option value="École d&apos;ingénieur">École d&apos;ingénieur</option>
-                                <option value="École de commerce">École de commerce</option>
-                                <option value="École spécialisée">École spécialisée</option>
-                                <option value="Formation continue">Formation continue</option>
-                            </optgroup>
-
-                            <optgroup label="👨‍💼 Professionnel">
-                                <option value="En activité">En activité</option>
-                                <option value="En recherche d&apos;emploi">En recherche d&apos;emploi</option>
-                                <option value="Retraité">Retraité</option>
-                            </optgroup>
-
-                            <option value="Autre">Autre</option>
-                        </select>
-                        <Typography variant="caption" color="muted" className="mt-1">
-                            Pour adapter les questions à votre niveau
-                        </Typography>
-                    </div>
+                    {/* Instructions personnalisées */}
+                    <Textarea
+                        label="Instructions personnalisées"
+                        value={instructions}
+                        onChange={(e) => setInstructions(e.target.value)}
+                        placeholder="Ex: Concentrez-vous sur les chapitres 3 et 4, évitez les questions trop techniques, privilégiez les applications pratiques..."
+                        rows={3}
+                        helperText="Instructions optionnelles pour guider la génération des questions"
+                    />
 
                     {/* Type de questions */}
                     <div>
