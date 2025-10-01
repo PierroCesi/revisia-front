@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Card, Typography, Input, Alert, Toggle, LoadingSpinner } from '@/components/ui';
+import { Button, Card, Typography, Input, Alert, Toggle } from '@/components/ui';
 import { Crown, CreditCard, Shield, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -10,7 +10,7 @@ export default function CheckoutPage() {
     const { user } = useAuth();
     const router = useRouter();
     const [isAnnual, setIsAnnual] = useState(false);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [, setIsProcessing] = useState(false);
     const [error, setError] = useState('');
 
     const handlePayment = async () => {
@@ -39,7 +39,7 @@ export default function CheckoutPage() {
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 py-12">
             <div className="max-w-4xl mx-auto px-6">
                 {/* Header */}
-                <div className="text-center mb-12">
+                <div className="text-center mb-8">
                     <div className="flex items-center justify-center space-x-3 mb-4">
                         <Crown className="w-8 h-8 text-orange-600" />
                         <Typography variant="h1" className="text-4xl font-bold text-gray-900">
@@ -49,6 +49,25 @@ export default function CheckoutPage() {
                     <Typography variant="body" className="text-xl text-gray-600">
                         Débloquez toutes les fonctionnalités de Revisia
                     </Typography>
+                </div>
+
+                {/* Billing Toggle */}
+                <div className="flex items-center justify-center space-x-4 mb-8">
+                    <span className={`text-sm font-medium ${!isAnnual ? 'text-gray-900' : 'text-gray-500'}`}>
+                        Mensuel
+                    </span>
+                    <Toggle
+                        checked={isAnnual}
+                        onChange={setIsAnnual}
+                    />
+                    <span className={`text-sm font-medium ${isAnnual ? 'text-gray-900' : 'text-gray-500'}`}>
+                        Annuel
+                    </span>
+                    {isAnnual && (
+                        <span className="text-sm text-green-600 font-medium">
+                            Économisez €{savings}
+                        </span>
+                    )}
                 </div>
 
                 {/* Plan Details */}
@@ -77,7 +96,7 @@ export default function CheckoutPage() {
                         <div className="grid md:grid-cols-2 gap-4">
                             {[
                                 'Quiz illimités',
-                                'Questions illimitées',
+                                '50 questions max par quiz',
                                 'Tentatives illimitées',
                                 'Export PDF',
                                 'Partage de quiz',
@@ -201,25 +220,17 @@ export default function CheckoutPage() {
                             {/* Payment Button */}
                             <Button
                                 onClick={handlePayment}
-                                disabled={isProcessing}
-                                className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3"
+                                disabled={true}
+                                className="w-full bg-gray-400 text-white py-3 cursor-not-allowed"
                             >
-                                {isProcessing ? (
-                                    <div className="flex items-center space-x-2">
-                                        <LoadingSpinner size="sm" className="border-white border-t-transparent" />
-                                        <span>Traitement...</span>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center space-x-2">
-                                        <Crown className="w-5 h-5" />
-                                        <span>Passer à Premium - €{total}</span>
-                                    </div>
-                                )}
+                                <div className="flex items-center space-x-2">
+                                    <Crown className="w-5 h-5" />
+                                    <span>Fonctionnalité bientôt disponible</span>
+                                </div>
                             </Button>
 
                             <Typography variant="caption" className="text-gray-500 text-center block">
-                                En cliquant sur &quot;Passer à Premium&quot;, vous acceptez nos conditions d&apos;utilisation.
-                                Vous pouvez annuler à tout moment.
+                                La fonctionnalité de paiement sera bientôt disponible.
                             </Typography>
 
                             {/* Billing Toggle */}

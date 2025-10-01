@@ -21,8 +21,7 @@ export default function PricingPage() {
                 'Support communautaire'
             ],
             limitations: [
-                'Pas d\'export PDF',
-                'Pas de partage',
+                'IA basique (modèle limité)',
                 'Pas de statistiques avancées'
             ],
             cta: 'Commencer gratuitement',
@@ -38,11 +37,10 @@ export default function PricingPage() {
             description: 'Pour les utilisateurs sérieux',
             features: [
                 'Quiz illimités',
-                'Questions illimitées',
+                '50 questions max par quiz',
                 'Tentatives illimitées',
+                'Dernier modèle OpenAI',
                 'Historique complet',
-                'Export PDF',
-                'Partage de quiz',
                 'Statistiques avancées',
                 'Support prioritaire',
                 'Fonctionnalités exclusives'

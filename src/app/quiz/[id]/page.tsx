@@ -72,7 +72,7 @@ export default function QuizPage({ params }: QuizPageProps) {
             console.log('Redirection vers login - pas d\'utilisateur et pas invité');
             router.push('/login');
         }
-    }, [user, loading, isGuest, isGuestLocal, router]);
+    }, [user, loading, isGuest, isGuestLocal, router, sessionId]);
 
     useEffect(() => {
         console.log('Quiz Page - Chargement:', { user: !!user, isGuest, isGuestLocal, id, sessionId, urlSessionId });
@@ -126,7 +126,7 @@ export default function QuizPage({ params }: QuizPageProps) {
             };
             loadQuiz();
         }
-    }, [user, isGuest, isGuestLocal, id, urlSessionId, createGuestSession, refreshRoleInfo]);
+    }, [user, isGuest, isGuestLocal, id, urlSessionId, createGuestSession, refreshRoleInfo, sessionId]);
 
     const handleAnswerSelect = (questionId: number, answerId: number) => {
         setSelectedAnswers(prev => ({

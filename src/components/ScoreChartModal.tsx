@@ -108,19 +108,19 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                         <Typography variant="h4" className="font-bold text-orange-700">
                             {averageScore}%
                         </Typography>
-                        <Typography variant="caption" color="muted">Score moyen</Typography>
+                        <Typography variant="caption" color="muted" className="break-words">Score moyen</Typography>
                     </Card>
                     <Card className="p-4 text-center">
                         <Typography variant="h4" className="font-bold text-green-600">
                             {bestScore}%
                         </Typography>
-                        <Typography variant="caption" color="muted">Meilleur score</Typography>
+                        <Typography variant="caption" color="muted" className="break-words">Meilleur score</Typography>
                     </Card>
                     <Card className="p-4 text-center">
                         <Typography variant="h4" className={`font-bold ${improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {improvement >= 0 ? '+' : ''}{improvement}%
                         </Typography>
-                        <Typography variant="caption" color="muted">Progression</Typography>
+                        <Typography variant="caption" color="muted" className="break-words">Progression</Typography>
                     </Card>
                 </div>
 

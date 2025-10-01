@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
                         </p>
                         <div className="flex space-x-4">
                             <a
-                                href="mailto:contact@revisia.fr"
+                                href="mailto:pierre.forques@viacesi.fr"
                                 className="text-gray-400 hover:text-orange-500 transition-colors"
                                 aria-label="Email"
                             >
@@ -102,35 +102,27 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             <li>
                                 <a
-                                    href="/help"
-                                    className="text-gray-600 hover:text-orange-600 transition-colors"
-                                >
-                                    Centre d&apos;aide
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="/contact"
+                                    href="mailto:pierre.forques@viacesi.fr"
                                     className="text-gray-600 hover:text-orange-600 transition-colors"
                                 >
                                     Contact
                                 </a>
                             </li>
                             <li>
-                                <a
+                                <Link
                                     href="/privacy"
                                     className="text-gray-600 hover:text-orange-600 transition-colors"
                                 >
                                     Confidentialité
-                                </a>
+                                </Link>
                             </li>
                             <li>
-                                <a
+                                <Link
                                     href="/terms"
                                     className="text-gray-600 hover:text-orange-600 transition-colors"
                                 >
                                     Conditions d&apos;utilisation
-                                </a>
+                                </Link>
                             </li>
                         </ul>
                     </div>

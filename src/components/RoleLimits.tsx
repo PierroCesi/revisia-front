@@ -12,6 +12,11 @@ export default function RoleLimits() {
         return null;
     }
 
+    // Masquer le composant pour les utilisateurs premium
+    if (isPremium) {
+        return null;
+    }
+
     const getRoleIcon = () => {
         if (isGuest) return <User className="w-4 h-4" />;
         if (isFree) return <UserCheck className="w-4 h-4" />;

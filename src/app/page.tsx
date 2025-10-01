@@ -200,8 +200,8 @@ export default function HomePage() {
                                         Transformez vos <span className="text-orange-700">documents</span> en QCM intelligents
                                     </h1>
                                     <p className="text-lg text-muted-foreground text-balance max-w-2xl">
-                                        Uploadez une photo ou un document, et notre IA génère automatiquement des questions flash
-                                        personnalisées pour optimiser vos révisions.
+                                        Uploadez une photo ou un document, et notre IA génère automatiquement des QCM
+                                        personnalisés pour optimiser vos révisions.
                                     </p>
                                 </div>
 

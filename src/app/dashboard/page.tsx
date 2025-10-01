@@ -271,7 +271,8 @@ export default function Dashboard() {
                                     className="widget-card p-6 hover:scale-[1.02] transition-all duration-300 cursor-pointer"
                                     onClick={() => handleLessonCardClick(lesson)}
                                 >
-                                    <div className="flex items-center justify-between">
+                                    {/* Desktop layout - inchangé */}
+                                    <div className="hidden md:flex items-center justify-between">
                                         <div className="flex items-center space-x-4">
                                             <div className="w-12 h-12 bg-orange-soft rounded-xl flex items-center justify-center">
                                                 <BookOpen className="w-6 h-6 text-orange-700" />
@@ -326,6 +327,76 @@ export default function Dashboard() {
                                                 ) : (
                                                     <Link href={`/quiz/${lesson.id}`}>
                                                         <Button size="sm" className="bg-orange-primary text-white hover:bg-orange-700">
+                                                            <Play className="w-4 h-4 mr-2" />
+                                                            Continuer
+                                                        </Button>
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Mobile layout - nouveau */}
+                                    <div className="md:hidden">
+                                        {/* Header avec icône et titre */}
+                                        <div className="flex items-center space-x-3 mb-4">
+                                            <div className="w-10 h-10 bg-orange-soft rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <BookOpen className="w-5 h-5 text-orange-700" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <Typography variant="h5" className="font-semibold text-foreground mb-1 truncate">
+                                                    {lesson.title}
+                                                </Typography>
+                                                <div className="flex items-center space-x-2">
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {getDifficultyLabel(lesson.difficulty)}
+                                                    </Badge>
+                                                    <Typography variant="caption" color="muted">
+                                                        {lesson.total_questions} questions
+                                                    </Typography>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Stats et bouton */}
+                                        <div className="flex flex-col space-y-4">
+                                            {/* Stats */}
+                                            <div className="flex items-center justify-between">
+                                                {/* Nombre de tentatives */}
+                                                <div className="text-center">
+                                                    <Typography variant="h4" className="font-bold text-blue-700 text-lg">
+                                                        {lesson.total_attempts}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="muted" className="text-xs">
+                                                        essai{lesson.total_attempts > 1 ? 's' : ''}
+                                                    </Typography>
+                                                </div>
+
+                                                {/* Dernier Score */}
+                                                <div className="text-center">
+                                                    <Typography variant="h4" className={`font-bold text-lg ${getScoreColor(lesson.last_score)}`}>
+                                                        {lesson.last_score}%
+                                                    </Typography>
+                                                    <Typography variant="caption" color="muted" className="text-xs">Dernier score</Typography>
+                                                </div>
+                                            </div>
+
+                                            {/* Action Button */}
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                {lesson.status === 'termine' ? (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => resetLesson(lesson.id)}
+                                                        disabled={resettingLesson === lesson.id}
+                                                        className="w-full border-orange-200 text-orange-700 hover:bg-orange-50"
+                                                    >
+                                                        <RotateCcw className="w-4 h-4 mr-2" />
+                                                        {resettingLesson === lesson.id ? 'Reset...' : 'Refaire'}
+                                                    </Button>
+                                                ) : (
+                                                    <Link href={`/quiz/${lesson.id}`} className="block w-full">
+                                                        <Button size="sm" className="w-full bg-orange-primary text-white hover:bg-orange-700">
                                                             <Play className="w-4 h-4 mr-2" />
                                                             Continuer
                                                         </Button>
