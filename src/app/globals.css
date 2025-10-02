@@ -138,22 +138,22 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground font-sans;
   }
 }
 
 @layer utilities {
+
   /* Soft gradient background inspired by the screenshot */
   .dashboard-gradient {
-    background: linear-gradient(
-      135deg,
-      oklch(0.975 0.003 240) 0%,
-      oklch(0.97 0.005 250) 25%,
-      oklch(0.965 0.008 260) 50%,
-      oklch(0.97 0.005 270) 75%,
-      oklch(0.975 0.003 280) 100%
-    );
+    background: linear-gradient(135deg,
+        oklch(0.975 0.003 240) 0%,
+        oklch(0.97 0.005 250) 25%,
+        oklch(0.965 0.008 260) 50%,
+        oklch(0.97 0.005 270) 75%,
+        oklch(0.975 0.003 280) 100%);
   }
 
   /* More subtle glass effect with soft grays */
@@ -182,18 +182,23 @@
   .bg-blue-soft {
     background-color: var(--color-blue-soft);
   }
+
   .bg-purple-soft {
     background-color: var(--color-purple-soft);
   }
+
   .bg-pink-soft {
     background-color: var(--color-pink-soft);
   }
+
   .bg-orange-soft {
     background-color: var(--color-orange-soft);
   }
+
   .bg-green-soft {
     background-color: var(--color-green-soft);
   }
+
   .bg-orange-primary {
     background-color: var(--color-orange-primary);
   }
@@ -201,15 +206,19 @@
   .text-blue-700 {
     color: oklch(0.45 0.15 220);
   }
+
   .text-purple-700 {
     color: oklch(0.45 0.15 280);
   }
+
   .text-pink-700 {
     color: oklch(0.45 0.15 320);
   }
+
   .text-orange-700 {
     color: var(--color-orange-700);
   }
+
   .text-green-700 {
     color: oklch(0.45 0.15 160);
   }
@@ -254,6 +263,15 @@
     border-color: var(--orange-700);
     transform: scale(1.02);
   }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 @keyframes fadeIn {
@@ -261,6 +279,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -272,6 +291,7 @@
     opacity: 0;
     transform: translateY(40px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -283,6 +303,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -290,10 +311,12 @@
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0px) rotate(0deg);
   }
+
   50% {
     transform: translateY(-20px) rotate(5deg);
   }

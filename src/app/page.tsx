@@ -21,7 +21,7 @@ import {
     Play,
     ImageIcon,
 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useUserRole } from "@/hooks/useUserRole"
 import { useGuestSession } from "@/hooks/useGuestSession"
@@ -34,32 +34,11 @@ export default function HomePage() {
     const [showAISettings, setShowAISettings] = useState(false)
     const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [guestLimitError, setGuestLimitError] = useState<string | null>(null)
+    const [errorType, setErrorType] = useState<string>('general')
     const { user, loading } = useAuth()
-    const { isGuest, canCreateQuiz } = useUserRole()
-    const { sessionId, isGuest: isGuestSession } = useGuestSession()
+    const { isGuest } = useUserRole()
+    const { isGuest: isGuestSession } = useGuestSession()
 
-    // Vérifier les limites invitées au chargement de la page
-    useEffect(() => {
-        const checkGuestLimits = async () => {
-            if (!user && (isGuest || isGuestSession)) {
-                try {
-                    const { documentsAPI } = await import('@/lib/api')
-                    const result = await documentsAPI.checkGuestLimits(sessionId || undefined)
-
-                    if (!result.can_upload) {
-                        setGuestLimitError(result.details || result.error || 'Limite atteinte')
-                    }
-                } catch (error) {
-                    console.error('Erreur lors de la vérification des limites:', error)
-                }
-            }
-        }
-
-        if (!loading) {
-            checkGuestLimits()
-        }
-    }, [user, loading, isGuest, isGuestSession, sessionId])
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault()
@@ -89,30 +68,8 @@ export default function HomePage() {
     }
 
     const handleFileUpload = async (file: File) => {
-        // Vérifier les limites avant l'upload
-        if (!user && (isGuest || isGuestSession)) {
-            try {
-                const { documentsAPI } = await import('@/lib/api')
-                const result = await documentsAPI.checkGuestLimits(sessionId || undefined)
-
-                if (!result.can_upload) {
-                    setGuestLimitError(result.details || result.error || 'Limite atteinte')
-                    return
-                }
-            } catch (error) {
-                console.error('Erreur lors de la vérification des limites:', error)
-                setError('Erreur lors de la vérification des limites. Veuillez réessayer.')
-                return
-            }
-        }
-
-        if (!canCreateQuiz) {
-            setError('Limite de quiz atteinte. Inscrivez-vous pour créer plus de quiz !')
-            return
-        }
-
         setError(null) // Clear any previous errors
-        setGuestLimitError(null) // Clear guest limit errors
+        setErrorType('general') // Reset error type
         setUploadedFile(file)
         setShowAISettings(true)
     }
@@ -123,6 +80,7 @@ export default function HomePage() {
         try {
             setIsGeneratingQuestions(true)
             setError(null)
+            setErrorType('general')
 
             // Appeler l'API pour uploader le fichier
             const { documentsAPI } = await import('@/lib/api')
@@ -151,10 +109,19 @@ export default function HomePage() {
 
             // Extraire le message d'erreur de la réponse
             let errorMessage = 'Erreur lors de la génération du quiz. Veuillez réessayer.'
+            let errorType = 'general'
 
-            const errorWithResponse = error as { response?: { data?: { error?: string; details?: string } }; message?: string };
+            const errorWithResponse = error as { response?: { data?: { error?: string; details?: string; action?: string } }; message?: string };
             if (errorWithResponse?.response?.data?.error) {
                 errorMessage = errorWithResponse.response.data.error
+                if (errorWithResponse.response.data.details) {
+                    errorMessage += ` ${errorWithResponse.response.data.details}`
+                }
+                if (errorWithResponse.response.data.action === 'signup_required') {
+                    errorType = 'signup_required'
+                } else if (errorWithResponse.response.data.action === 'rate_limit_exceeded') {
+                    errorType = 'signup_required'  // Même popup stylée pour rate limiting
+                }
             } else if (errorWithResponse?.response?.data?.details) {
                 errorMessage = errorWithResponse.response.data.details
             } else if (errorWithResponse?.message) {
@@ -162,6 +129,13 @@ export default function HomePage() {
             }
 
             setError(errorMessage)
+            setErrorType(errorType)
+
+            // Si c'est une erreur de limite atteinte, on ferme la modal aussi
+            if (errorType === 'signup_required') {
+                setShowAISettings(false)
+                setUploadedFile(null)
+            }
         } finally {
             setIsGeneratingQuestions(false)
         }
@@ -206,11 +180,11 @@ export default function HomePage() {
                                 </div>
 
                                 <div
-                                    className={`upload-zone rounded-2xl p-8 text-center ${guestLimitError ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isDragOver ? "drag-over" : ""}`}
-                                    onDragOver={guestLimitError ? undefined : handleDragOver}
-                                    onDragLeave={guestLimitError ? undefined : handleDragLeave}
-                                    onDrop={guestLimitError ? undefined : handleDrop}
-                                    onClick={guestLimitError ? undefined : () => document.getElementById("file-input")?.click()}
+                                    className={`upload-zone rounded-2xl p-8 text-center cursor-pointer ${isDragOver ? "drag-over" : ""}`}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onClick={() => document.getElementById("file-input")?.click()}
                                 >
                                     <input
                                         id="file-input"
@@ -253,38 +227,6 @@ export default function HomePage() {
                                     </div>
                                 </div>
 
-                                {/* Message d'erreur pour les limites invitées */}
-                                {guestLimitError && (
-                                    <div className="bg-red-soft/30 border border-red-200 rounded-xl p-4">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-8 h-8 bg-red-soft rounded-lg flex items-center justify-center">
-                                                <span className="text-red-700 text-sm">⚠️</span>
-                                            </div>
-                                            <div className="flex-1">
-                                                <Typography variant="body" className="font-medium text-red-800">
-                                                    Limite d&apos;utilisation atteinte
-                                                </Typography>
-                                                <Typography variant="body" className="text-red-700 text-sm mt-1">
-                                                    {guestLimitError}
-                                                </Typography>
-                                            </div>
-                                        </div>
-                                        <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                                            <Link href="/register">
-                                                <Button className="bg-orange-primary text-white hover:bg-orange-700 w-full sm:w-auto">
-                                                    S&apos;inscrire gratuitement
-                                                </Button>
-                                            </Link>
-                                            <Button
-                                                variant="outline"
-                                                className="border-red-200 text-red-700 hover:bg-red-50 w-full sm:w-auto"
-                                                onClick={() => setGuestLimitError(null)}
-                                            >
-                                                Fermer
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )}
 
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     {user ? (
@@ -560,13 +502,63 @@ export default function HomePage() {
                 </section>
             </main>
 
-            {/* Error Alert */}
-            {error && (
+            {/* Error Alerts */}
+            {error && errorType === 'signup_required' && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
+                    <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl">
+                        <div className="text-center space-y-6">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                                <span className="text-red-600 text-2xl">⚠️</span>
+                            </div>
+
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-bold text-gray-900">
+                                    Limite d&apos;utilisation atteinte
+                                </h3>
+                                <p className="text-gray-600 text-sm leading-relaxed">
+                                    Vous avez déjà utilisé votre quota gratuit. Inscrivez-vous pour créer plus de quiz et sauvegarder vos résultats.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col gap-3">
+                                <Link href="/register">
+                                    <Button className="bg-orange-600 text-white hover:bg-orange-700 w-full">
+                                        S&apos;inscrire gratuitement
+                                    </Button>
+                                </Link>
+                                <Link href="/login">
+                                    <Button variant="outline" className="w-full">
+                                        Se connecter
+                                    </Button>
+                                </Link>
+                            </div>
+
+                            <Button
+                                variant="ghost"
+                                className="text-gray-500 hover:text-gray-700"
+                                onClick={() => {
+                                    setError(null)
+                                    setErrorType('general')
+                                }}
+                            >
+                                Fermer
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* General Error Alert */}
+            {error && errorType !== 'signup_required' && (
                 <ErrorAlert
                     message={error}
-                    onDismiss={() => setError(null)}
+                    onDismiss={() => {
+                        setError(null)
+                        setErrorType('general')
+                    }}
                     onRetry={() => {
                         setError(null)
+                        setErrorType('general')
                         if (uploadedFile) {
                             setShowAISettings(true)
                         }

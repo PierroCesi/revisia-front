@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { authAPI, UserRoleInfo } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useUserRole = () => {
+    const { user, loading: authLoading } = useAuth();
     const [roleInfo, setRoleInfo] = useState<UserRoleInfo | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -14,6 +16,7 @@ export const useUserRole = () => {
             setError(null);
             const info = await authAPI.getRoleInfo();
             setRoleInfo(info);
+            console.log('🔄 Role info updated:', info);
         } catch (err) {
             console.error('Erreur lors de la récupération des informations de rôle:', err);
             setError('Impossible de récupérer les informations de rôle');
@@ -23,8 +26,22 @@ export const useUserRole = () => {
     }, []);
 
     useEffect(() => {
+        // Si on est en train de charger l'auth, on attend
+        if (authLoading) {
+            return;
+        }
+
+        // Si on n'a pas d'utilisateur (logout), on remet les infos à zéro
+        if (!user) {
+            setRoleInfo(null);
+            setLoading(false);
+            setError('');
+            return;
+        }
+
+        // Si on a un utilisateur, on charge ses infos de rôle
         fetchRoleInfo();
-    }, [fetchRoleInfo]);
+    }, [user, authLoading, fetchRoleInfo]);
 
     const refreshRoleInfo = useCallback(() => {
         fetchRoleInfo();

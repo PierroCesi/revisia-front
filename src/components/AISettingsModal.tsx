@@ -66,7 +66,7 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName, 
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="widget-card max-w-md w-full p-6 relative">
+            <Card className="widget-card max-w-md w-full p-6 relative h-[90vh] overflow-y-auto no-scrollbar">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-3">
