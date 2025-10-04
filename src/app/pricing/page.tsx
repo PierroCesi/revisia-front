@@ -313,11 +313,12 @@ export default function PricingPage() {
 
                         <Card className="widget-card p-6">
                             <Typography variant="h4" className="font-semibold text-gray-900 mb-3">
-                                Puis-je partager mes quiz ?
+                                Comment fonctionne l&apos;IA ?
                             </Typography>
                             <Typography variant="body" className="text-gray-600">
-                                Avec Premium, vous pouvez partager vos quiz avec d&apos;autres utilisateurs
-                                et exporter vos résultats en PDF pour vos révisions.
+                                Nous utilisons le dernier modèle OpenAI pour générer des questions
+                                intelligentes à partir de vos documents. L&apos;IA analyse le contenu et crée
+                                des quiz adaptés à votre niveau.
                             </Typography>
                         </Card>
                     </div>

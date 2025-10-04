@@ -328,6 +328,70 @@ export const lessonsAPI = {
         const response = await api.post('/auth/transfer-guest-data/', { session_id: sessionId });
         return response.data;
     },
+
+    deleteLesson: async (lessonId: number): Promise<{ message: string; lesson_id: number }> => {
+        const response = await api.delete(`/auth/lessons/${lessonId}/delete/`);
+        return response.data;
+    },
+};
+
+export const stripeAPI = {
+    createPaymentIntent: async (amount: number): Promise<{
+        client_secret: string;
+        amount: number;
+    }> => {
+        const response = await api.post('/auth/stripe/create-payment-intent/', { amount });
+        return response.data;
+    },
+
+    confirmPayment: async (paymentIntentId: string): Promise<{
+        success: boolean;
+        message: string;
+        user: User;
+    }> => {
+        const response = await api.post('/auth/stripe/confirm-payment/', {
+            payment_intent_id: paymentIntentId
+        });
+        return response.data;
+    },
+};
+
+export const subscriptionAPI = {
+    getSubscriptionInfo: async (): Promise<{
+        is_premium: boolean;
+        subscription_status: 'active' | 'expired' | 'permanent' | 'inactive';
+        is_subscription_active: boolean;
+        current_period_end: string | null;
+        days_remaining: number | null;
+        subscription_interval: string | null;
+        cancel_at_period_end: boolean;
+        canceled_at: string | null;
+        user_role: string;
+    }> => {
+        const response = await api.get('/auth/subscription-info/');
+        return response.data;
+    },
+
+    createSubscription: async (priceId: string): Promise<{
+        subscription_id: string;
+        client_secret: string;
+        status: string;
+    }> => {
+        const response = await api.post('/auth/subscription/create/', {
+            price_id: priceId
+        });
+        return response.data;
+    },
+
+
+    cancelSubscription: async (): Promise<{
+        success: boolean;
+        message: string;
+        cancel_at: string;
+    }> => {
+        const response = await api.post('/auth/subscription/cancel/');
+        return response.data;
+    },
 };
 
 export default api;

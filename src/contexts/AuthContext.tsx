@@ -9,6 +9,7 @@ interface AuthContextType {
     register: (data: RegisterData) => Promise<void>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
+    updateUser: (userData: User) => void;
     loading: boolean;
 }
 
@@ -80,12 +81,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const updateUser = (userData: User) => {
+        setUser(userData);
+    };
+
     const value = {
         user,
         login,
         register,
         logout,
         refreshUser,
+        updateUser,
         loading,
     };
 

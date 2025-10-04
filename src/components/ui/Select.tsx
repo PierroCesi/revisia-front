@@ -30,7 +30,7 @@ export default function Select({
     placeholder,
     ...props
 }: SelectProps) {
-    const baseClasses = 'w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 bg-background text-foreground';
+    const baseClasses = 'w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 bg-background text-foreground placeholder:text-muted-foreground placeholder:opacity-70';
     const errorClasses = error
         ? 'border-destructive focus:border-destructive focus:ring-destructive'
         : 'border-input focus:border-orange-500 focus:ring-orange-500';

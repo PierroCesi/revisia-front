@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { extractErrorMessage, DEFAULT_ERROR_MESSAGES } from '@/lib/errorUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button, Card, Input, Typography, Alert } from '@/components/ui';
 import { useGuestSession } from '@/hooks/useGuestSession';
@@ -88,7 +89,7 @@ export default function RegisterPage() {
                 router.push('/dashboard');
             }
         } catch (err: unknown) {
-            setError((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erreur lors de l\'inscription');
+            setError(extractErrorMessage(err, DEFAULT_ERROR_MESSAGES.REGISTER));
         } finally {
             setIsLoading(false);
         }

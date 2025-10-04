@@ -22,8 +22,8 @@ export interface AISettings {
 }
 
 export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName, userEducationLevel }: AISettingsModalProps) {
-    const { maxQuestions, isGuest, isFree, isUnlimitedQuestions } = useUserRole();
-    const [questionCount, setQuestionCount] = useState(isUnlimitedQuestions ? 10 : Math.min(5, maxQuestions));
+    const { maxQuestions, isGuest, isFree } = useUserRole();
+    const [questionCount, setQuestionCount] = useState(Math.min(10, maxQuestions));
     const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
     const [educationLevel, setEducationLevel] = useState(userEducationLevel || '');
     const [instructions, setInstructions] = useState('');
@@ -99,17 +99,17 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName, 
                         label="Nombre de questions"
                         type="number"
                         min="1"
-                        max={isUnlimitedQuestions ? 50 : maxQuestions}
+                        max={maxQuestions}
                         value={questionCount}
                         onChange={(e) => {
                             const value = parseInt(e.target.value) || 1;
-                            setQuestionCount(isUnlimitedQuestions ? value : Math.min(value, maxQuestions));
+                            setQuestionCount(Math.min(value, maxQuestions));
                         }}
                         placeholder="5"
                         helperText={
-                            isGuest ? "Mode test : maximum 5 questions" :
-                                isFree ? "Compte gratuit : maximum 6 questions" :
-                                    "Premium : questions illimitées (recommandé : 10-20)"
+                            isGuest ? `Mode test : maximum ${maxQuestions} questions` :
+                                isFree ? `Compte gratuit : maximum ${maxQuestions} questions` :
+                                    `Premium : maximum ${maxQuestions} questions`
                         }
                     />
 

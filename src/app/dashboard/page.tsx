@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { documentsAPI, lessonsAPI, Lesson } from '@/lib/api';
+import { validateFileSize, getFileSizeMessage } from '@/lib/fileLimits';
 import { Button, Card, Typography, Badge, ErrorAlert } from '@/components/ui';
 import {
     Upload,
@@ -14,6 +15,7 @@ import {
     RotateCcw
 } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import AISettingsModal, { AISettings } from '@/components/AISettingsModal';
 import ScoreChartModal from '@/components/ScoreChartModal';
 import RoleLimits from '@/components/RoleLimits';
@@ -30,6 +32,7 @@ const getDifficultyLabel = (difficulty: string) => {
 
 export default function Dashboard() {
     const { user } = useAuth();
+    const searchParams = useSearchParams();
     const [lessons, setLessons] = useState<Lesson[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -46,6 +49,16 @@ export default function Dashboard() {
             loadData();
         }
     }, [user]);
+
+    // Vérifier si l'utilisateur vient d'être upgradé
+    useEffect(() => {
+        if (searchParams.get('upgraded') === 'true') {
+            // Nettoyer l'URL en supprimant le paramètre upgraded
+            const url = new URL(window.location.href);
+            url.searchParams.delete('upgraded');
+            window.history.replaceState({}, '', url.toString());
+        }
+    }, [searchParams]);
 
     const loadData = async () => {
         try {
@@ -90,6 +103,20 @@ export default function Dashboard() {
         try {
             console.log("Uploading file:", file.name);
             setError(null); // Clear any previous errors
+
+            // Déterminer le rôle utilisateur pour la validation
+            let userRole = 'guest'
+            if (user) {
+                userRole = user.is_premium ? 'premium' : 'free'
+            }
+
+            // Valider la taille du fichier
+            const validation = validateFileSize(file, userRole)
+            if (!validation.isValid) {
+                setError(validation.error || 'Fichier trop volumineux')
+                return
+            }
+
             // Au lieu d'uploader directement, on ouvre la popup de configuration
             setUploadedFile(file);
             setShowAISettings(true);
@@ -160,6 +187,29 @@ export default function Dashboard() {
         setShowScoreChart(true);
     };
 
+    const handleDeleteLesson = async (lessonId: number) => {
+        try {
+            await lessonsAPI.deleteLesson(lessonId);
+            // Recharger les données après suppression
+            loadData();
+            setError(null);
+        } catch (error: unknown) {
+            console.error('Erreur lors de la suppression:', error);
+            const errorWithResponse = error as { response?: { data?: { error?: string; details?: string } }; message?: string };
+            let errorMessage = 'Erreur lors de la suppression de la leçon. Veuillez réessayer.';
+
+            if (errorWithResponse?.response?.data?.error) {
+                errorMessage = errorWithResponse.response.data.error;
+            } else if (errorWithResponse?.response?.data?.details) {
+                errorMessage = errorWithResponse.response.data.details;
+            } else if (errorWithResponse?.message) {
+                errorMessage = errorWithResponse.message;
+            }
+
+            setError(errorMessage);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -194,6 +244,7 @@ export default function Dashboard() {
                         Continuez vos révisions et créez de nouvelles leçons pour progresser
                     </Typography>
                 </section>
+
 
                 {/* Role Limits */}
                 <RoleLimits />
@@ -232,8 +283,11 @@ export default function Dashboard() {
                                 <Typography variant="h4" className="text-orange-700 mb-2">
                                     Glissez vos fichiers ici ou cliquez pour sélectionner
                                 </Typography>
-                                <Typography variant="body" color="muted">
+                                <Typography variant="body" color="muted" className="mb-2">
                                     PDF, Word, images - Générez vos questions en quelques secondes
+                                </Typography>
+                                <Typography variant="caption" color="muted">
+                                    {getFileSizeMessage(user ? (user.is_premium ? 'premium' : 'free') : 'guest')}
                                 </Typography>
                             </div>
                         </div>
@@ -435,6 +489,7 @@ export default function Dashboard() {
                 lessonId={selectedLesson?.id || 0}
                 lessonTitle={selectedLesson?.title || ''}
                 lessonAverageScore={selectedLesson?.average_score}
+                onDelete={handleDeleteLesson}
             />
 
             {/* Loading Modal for Question Generation */}

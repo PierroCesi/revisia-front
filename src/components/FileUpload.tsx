@@ -106,7 +106,7 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
                     </Button>
 
                     <Typography variant="caption" color="muted">
-                        PDF, DOC, DOCX, JPG, PNG, GIF, TXT (max 10MB)
+                        PDF, DOC, DOCX, JPG, PNG, GIF, TXT (max 5MB)
                     </Typography>
                 </div>
             </Card>

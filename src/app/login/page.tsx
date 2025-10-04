@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { extractErrorMessage, DEFAULT_ERROR_MESSAGES } from '@/lib/errorUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button, Card, Input, Typography, Alert } from '@/components/ui';
 
@@ -38,7 +39,7 @@ export default function LoginPage() {
             await login(data.email, data.password);
             router.push('/dashboard');
         } catch (err: unknown) {
-            setError((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erreur de connexion');
+            setError(extractErrorMessage(err, DEFAULT_ERROR_MESSAGES.LOGIN));
         } finally {
             setIsLoading(false);
         }

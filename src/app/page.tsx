@@ -25,6 +25,8 @@ import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useUserRole } from "@/hooks/useUserRole"
 import { useGuestSession } from "@/hooks/useGuestSession"
+import { useRealisticStats } from "@/hooks/useRealisticStats"
+import { validateFileSize, getFileSizeMessage } from "@/lib/fileLimits"
 import Link from "next/link"
 import AISettingsModal, { AISettings } from "@/components/AISettingsModal"
 
@@ -38,6 +40,7 @@ export default function HomePage() {
     const { user, loading } = useAuth()
     const { isGuest } = useUserRole()
     const { isGuest: isGuestSession } = useGuestSession()
+    const stats = useRealisticStats()
 
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -70,6 +73,21 @@ export default function HomePage() {
     const handleFileUpload = async (file: File) => {
         setError(null) // Clear any previous errors
         setErrorType('general') // Reset error type
+
+        // Déterminer le rôle utilisateur pour la validation
+        let userRole = 'guest'
+        if (user) {
+            userRole = user.is_premium ? 'premium' : 'free'
+        }
+
+        // Valider la taille du fichier
+        const validation = validateFileSize(file, userRole)
+        if (!validation.isValid) {
+            setError(validation.error || 'Fichier trop volumineux')
+            setErrorType('general')
+            return
+        }
+
         setUploadedFile(file)
         setShowAISettings(true)
     }
@@ -212,8 +230,11 @@ export default function HomePage() {
                                             <h3 className="text-xl font-semibold text-orange-700 mb-2">
                                                 Glissez vos fichiers ici ou cliquez pour sélectionner
                                             </h3>
-                                            <p className="text-muted-foreground">
+                                            <p className="text-muted-foreground mb-2">
                                                 PDF, Word, images, photos manuscrites - Générez vos QCM en quelques secondes
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {getFileSizeMessage(user ? (user.is_premium ? 'premium' : 'free') : 'guest')}
                                             </p>
                                         </div>
 
@@ -274,33 +295,41 @@ export default function HomePage() {
                         </Card>
                     </div>
 
-                    <div className="lg:col-span-4 space-y-4">
-                        <Card className="widget-card p-6">
+                    <div className="lg:col-span-4 flex flex-col h-full gap-4">
+                        <Card className="widget-card p-6 flex-1 flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-semibold text-foreground">Utilisateurs actifs</h3>
                                 <div className="w-8 h-8 bg-green-soft rounded-xl flex items-center justify-center">
                                     <TrendingUp className="w-4 h-4 text-green-700" />
                                 </div>
                             </div>
-                            <div className="space-y-3">
-                                <div className="text-3xl font-bold text-foreground">12,847</div>
-                                <div className="text-sm text-muted-foreground">+23% ce mois</div>
+                            <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div className="text-3xl font-bold text-foreground">
+                                        {stats.users.toLocaleString('fr-FR')}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">{stats.usersChange}</div>
+                                </div>
                                 <div className="w-full bg-secondary rounded-full h-2">
                                     <div className="bg-green-600 h-2 rounded-full w-3/4 transition-all duration-1000"></div>
                                 </div>
                             </div>
                         </Card>
 
-                        <Card className="widget-card p-6">
+                        <Card className="widget-card p-6 flex-1 flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-semibold text-foreground">QCM générés</h3>
                                 <div className="w-8 h-8 bg-primary/20 rounded-xl flex items-center justify-center">
                                     <BarChart3 className="w-4 h-4 text-primary" />
                                 </div>
                             </div>
-                            <div className="space-y-3">
-                                <div className="text-3xl font-bold text-foreground">89,234</div>
-                                <div className="text-sm text-muted-foreground">Cette semaine</div>
+                            <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div className="text-3xl font-bold text-foreground">
+                                        {stats.qcm.toLocaleString('fr-FR')}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">{stats.period}</div>
+                                </div>
                                 <div className="flex space-x-1 h-8 items-end">
                                     {[40, 60, 30, 80, 50, 90, 70].map((height, i) => (
                                         <div
@@ -313,16 +342,18 @@ export default function HomePage() {
                             </div>
                         </Card>
 
-                        <Card className="widget-card p-6">
+                        <Card className="widget-card p-6 flex-1 flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-semibold text-foreground">Satisfaction</h3>
                                 <div className="w-8 h-8 bg-yellow-100 rounded-xl flex items-center justify-center">
                                     <Star className="w-4 h-4 text-yellow-600" />
                                 </div>
                             </div>
-                            <div className="space-y-3">
-                                <div className="text-3xl font-bold text-foreground">4.9/5</div>
-                                <div className="text-sm text-muted-foreground">2,847 avis</div>
+                            <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div className="text-3xl font-bold text-foreground">{stats.satisfaction}/5</div>
+                                    <div className="text-sm text-muted-foreground">2,847 avis</div>
+                                </div>
                                 <div className="flex space-x-1">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -410,8 +441,8 @@ export default function HomePage() {
                             },
                             {
                                 icon: Users,
-                                title: "Partage facile",
-                                description: "Partagez vos quiz avec vos amis",
+                                title: "IA de pointe",
+                                description: "Dernier modèle OpenAI pour des questions intelligentes",
                                 color: "bg-orange-soft",
                                 iconColor: "text-orange-700",
                             },

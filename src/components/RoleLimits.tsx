@@ -42,7 +42,7 @@ export default function RoleLimits() {
             return `Pour aujourd'hui, Il vous reste ${remainingQuizzes}/${maxQuizzes} génération de quiz. ${remainingAttempts}/${maxAttemptsPerDay} tentatives restantes.`;
         }
         if (isPremium) {
-            return 'Accès illimité à toutes les fonctionnalités de Revisia.';
+            return 'Premium : jusqu\'à 50 questions par quiz, quiz illimités, tentatives illimitées.';
         }
         return '';
     };

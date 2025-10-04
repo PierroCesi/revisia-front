@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Card, Typography } from '@/components/ui';
-import { X, TrendingUp, BarChart3 } from 'lucide-react';
+import { Button, Card, Typography, AlertDialog } from '@/components/ui';
+import { X, TrendingUp, BarChart3, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 interface ScoreChartModalProps {
@@ -11,6 +11,7 @@ interface ScoreChartModalProps {
     lessonId: number;
     lessonTitle: string;
     lessonAverageScore?: number;
+    onDelete?: (lessonId: number) => void;
 }
 
 interface ScoreData {
@@ -19,9 +20,11 @@ interface ScoreData {
     date: string;
 }
 
-export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle, lessonAverageScore }: ScoreChartModalProps) {
+export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle, lessonAverageScore, onDelete }: ScoreChartModalProps) {
     const [scoreHistory, setScoreHistory] = useState<ScoreData[]>([]);
     const [loading, setLoading] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [chartType, setChartType] = useState<'line' | 'bar'>('line');
 
     const loadScoreHistory = useCallback(async () => {
@@ -74,6 +77,21 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
         ? scoreHistory[scoreHistory.length - 1].score - scoreHistory[0].score
         : 0;
 
+    const handleDeleteConfirm = async () => {
+        if (!onDelete) return;
+
+        setIsDeleting(true);
+        try {
+            await onDelete(lessonId);
+            setShowDeleteDialog(false);
+            onClose(); // Fermer la modal après suppression
+        } catch (error) {
+            console.error('Erreur lors de la suppression:', error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <Card className="widget-card max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
@@ -92,14 +110,27 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                             </Typography>
                         </div>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onClose}
-                        className="p-2"
-                    >
-                        <X className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                        {onDelete && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowDeleteDialog(true)}
+                                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200"
+                                title="Supprimer cette leçon"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        )}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onClose}
+                            className="p-2"
+                        >
+                            <X className="w-4 h-4" />
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Stats Summary */}
@@ -237,6 +268,19 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                     </Button>
                 </div>
             </Card>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog
+                isOpen={showDeleteDialog}
+                onClose={() => setShowDeleteDialog(false)}
+                onConfirm={handleDeleteConfirm}
+                title="Supprimer la leçon"
+                description={`Êtes-vous sûr de vouloir supprimer définitivement la leçon "${lessonTitle}" ? Cette action supprimera également toutes les questions et réponses associées.`}
+                confirmText="Supprimer"
+                cancelText="Annuler"
+                variant="destructive"
+                isLoading={isDeleting}
+            />
         </div>
     );
 }
