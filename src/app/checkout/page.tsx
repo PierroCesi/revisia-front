@@ -12,9 +12,9 @@ export default function CheckoutPage() {
     const savings = isAnnual ? 19.89 : 0; // Économies
     const amount = Math.round(price * 100); // Montant en centimes pour Stripe
 
-    // Price IDs Stripe
-    const monthlyPriceId = 'price_1SEWOrDrRzoIRADbmlBpSSRg';
-    const yearlyPriceId = 'price_1SEWPXDrRzoIRADbbsqZ3XkH';
+    // Price IDs Stripe depuis les variables d'environnement
+    const monthlyPriceId = process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!;
+    const yearlyPriceId = process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID!;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 py-6 sm:py-12">
