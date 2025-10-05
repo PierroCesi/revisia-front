@@ -646,20 +646,16 @@ export default function HomePage() {
                                             🎮 Pendant que l&apos;IA travaille...
                                         </Typography>
                                         <div className="relative bg-black rounded-lg overflow-hidden flex justify-center">
-                                            <video
-                                                autoPlay
-                                                loop
-                                                muted
-                                                playsInline
-                                                className="h-80 w-auto object-contain"
-                                            >
-                                                <source src="/videos/subway-surfers.mp4" type="video/mp4" />
-                                                <source src="/videos/subway-surfers.webm" type="video/webm" />
-                                                <div className="flex items-center justify-center h-80 bg-gray-800 text-white">
-                                                    <Play className="w-8 h-8 mr-2" />
-                                                    Subway Surfers Gameplay
-                                                </div>
-                                            </video>
+                                            <iframe
+                                                width="320"
+                                                height="320"
+                                                src="https://www.youtube.com/embed/-ZsF8xk3Vy0?autoplay=1&mute=1&loop=1&playlist=-ZsF8xk3Vy0&controls=0&showinfo=0&rel=0&modestbranding=1"
+                                                title="Subway Surfers Gameplay"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                className="rounded-lg"
+                                            ></iframe>
                                             <div className="absolute top-2 right-2">
                                                 <Button
                                                     size="sm"
