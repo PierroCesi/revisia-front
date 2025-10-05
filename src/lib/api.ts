@@ -350,6 +350,23 @@ export const lessonsAPI = {
         const response = await api.delete(`/auth/lessons/${lessonId}/delete/`);
         return response.data;
     },
+
+    updateLesson: async (lessonId: number, title: string): Promise<{ message: string; lesson: Lesson }> => {
+        const response = await api.put(`/auth/lessons/${lessonId}/update/`, { title });
+        return response.data;
+    },
+
+    deleteQuestion: async (lessonId: number, questionId: number, sessionId?: string): Promise<{
+        message: string;
+        lesson_progress: number;
+        lesson_score: number;
+        total_questions: number;
+        session_id?: string;
+    }> => {
+        const params = sessionId ? { session_id: sessionId } : {};
+        const response = await api.delete(`/auth/lessons/${lessonId}/questions/${questionId}/delete/`, { params });
+        return response.data;
+    },
 };
 
 export const stripeAPI = {

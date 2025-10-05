@@ -20,6 +20,7 @@ import {
     Star,
     Play,
     ImageIcon,
+    X,
 } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
@@ -37,6 +38,7 @@ export default function HomePage() {
     const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [errorType, setErrorType] = useState<string>('general')
+    const [showSubwaySurfers, setShowSubwaySurfers] = useState(true)
     const { user, loading } = useAuth()
     const { isGuest } = useUserRole()
     const { isGuest: isGuestSession } = useGuestSession()
@@ -613,8 +615,9 @@ export default function HomePage() {
             {/* Loading Modal for Question Generation */}
             {isGeneratingQuestions && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <Card className="widget-card p-8 text-center max-w-md w-full">
-                        <div className="space-y-4">
+                    <Card className="widget-card p-8 text-center max-w-lg w-full">
+                        <div className="space-y-6">
+                            {/* AI Generation Info */}
                             <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto">
                                 <Brain className="w-8 h-8 text-white animate-pulse" />
                             </div>
@@ -629,6 +632,51 @@ export default function HomePage() {
                             <div className="flex justify-center">
                                 <LoadingSpinner size="lg" />
                             </div>
+                            <div className="text-sm text-gray-500">
+                                <Typography variant="caption" color="muted">
+                                    Cela peut prendre quelques dizaines de secondes...
+                                </Typography>
+                            </div>
+
+                            {/* Subway Surfers Video */}
+                            {showSubwaySurfers && (
+                                <div className="relative mt-6">
+                                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4">
+                                        <Typography variant="h6" className="text-white font-bold mb-3">
+                                            🎮 Pendant que l&apos;IA travaille...
+                                        </Typography>
+                                        <div className="relative bg-black rounded-lg overflow-hidden flex justify-center">
+                                            <video
+                                                autoPlay
+                                                loop
+                                                muted
+                                                playsInline
+                                                className="h-80 w-auto object-contain"
+                                            >
+                                                <source src="/videos/subway-surfers.mp4" type="video/mp4" />
+                                                <source src="/videos/subway-surfers.webm" type="video/webm" />
+                                                <div className="flex items-center justify-center h-80 bg-gray-800 text-white">
+                                                    <Play className="w-8 h-8 mr-2" />
+                                                    Subway Surfers Gameplay
+                                                </div>
+                                            </video>
+                                            <div className="absolute top-2 right-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    onClick={() => setShowSubwaySurfers(false)}
+                                                    className="bg-white/90 hover:bg-white text-gray-800 px-2 py-1 text-xs"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <Typography variant="caption" className="text-white/80 mt-2 block">
+                                            Amusez-vous pendant que l&apos;IA génère vos questions ! 🚀
+                                        </Typography>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>

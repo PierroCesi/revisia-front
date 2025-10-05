@@ -12,13 +12,16 @@ import {
     Play,
     BookOpen,
     Zap,
-    RotateCcw
+    RotateCcw,
+    Edit3,
+    X
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import AISettingsModal, { AISettings } from '@/components/AISettingsModal';
 import ScoreChartModal from '@/components/ScoreChartModal';
 import AttemptDetailsModal from '@/components/AttemptDetailsModal';
+import RenameLessonModal from '@/components/RenameLessonModal';
 import RoleLimits from '@/components/RoleLimits';
 
 // Helper function pour mapper les difficultés
@@ -63,6 +66,10 @@ export default function Dashboard() {
     const [error, setError] = useState<string | null>(null);
     const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
     const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
+    const [showRenameModal, setShowRenameModal] = useState(false);
+    const [lessonToRename, setLessonToRename] = useState<Lesson | null>(null);
+    const [isRenamingLesson, setIsRenamingLesson] = useState(false);
+    const [showSubwaySurfers, setShowSubwaySurfers] = useState(true);
 
     useEffect(() => {
         if (user) {
@@ -250,6 +257,45 @@ export default function Dashboard() {
         }
     };
 
+    const handleRenameLesson = (lesson: Lesson) => {
+        setLessonToRename(lesson);
+        setShowRenameModal(true);
+    };
+
+    const handleConfirmRename = async (newTitle: string) => {
+        if (!lessonToRename) return;
+
+        try {
+            setIsRenamingLesson(true);
+            await lessonsAPI.updateLesson(lessonToRename.id, newTitle);
+
+            // Mettre à jour la liste des leçons
+            loadData();
+
+            // Fermer le modal
+            setShowRenameModal(false);
+            setLessonToRename(null);
+            setError(null);
+        } catch (error: unknown) {
+            console.error('Erreur lors du renommage:', error);
+            const errorWithResponse = error as { response?: { data?: { error?: string; details?: string } }; message?: string };
+            let errorMessage = 'Erreur lors du renommage de la leçon. Veuillez réessayer.';
+
+            if (errorWithResponse?.response?.data?.error) {
+                errorMessage = errorWithResponse.response.data.error;
+            } else if (errorWithResponse?.response?.data?.details) {
+                errorMessage = errorWithResponse.response.data.details;
+            } else if (errorWithResponse?.message) {
+                errorMessage = errorWithResponse.message;
+            }
+
+            setError(errorMessage);
+            throw error; // Re-throw pour que le modal puisse gérer l'erreur
+        } finally {
+            setIsRenamingLesson(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -371,10 +417,22 @@ export default function Dashboard() {
                                             <div className="w-12 h-12 bg-orange-soft rounded-xl flex items-center justify-center flex-shrink-0">
                                                 <BookOpen className="w-6 h-6 text-orange-700" />
                                             </div>
-                                            <div>
-                                                <Typography variant="h5" className="font-semibold text-foreground mb-1">
-                                                    {lesson.title}
-                                                </Typography>
+                                            <div className="flex-1">
+                                                <div className="flex items-center space-x-2 mb-1">
+                                                    <Typography variant="h5" className="font-semibold text-foreground">
+                                                        {lesson.title}
+                                                    </Typography>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRenameLesson(lesson);
+                                                        }}
+                                                        className="p-1 hover:bg-orange-100 rounded-md transition-colors group"
+                                                        title="Renommer la leçon"
+                                                    >
+                                                        <Edit3 className="w-4 h-4 text-orange-600 group-hover:text-orange-700" />
+                                                    </button>
+                                                </div>
                                                 <div className="flex items-center space-x-3">
                                                     <Badge variant="secondary" className="text-xs">
                                                         {getDifficultyLabel(lesson.difficulty)}
@@ -438,9 +496,21 @@ export default function Dashboard() {
                                                 <BookOpen className="w-5 h-5 text-orange-700" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <Typography variant="h5" className="font-semibold text-foreground mb-1 leading-tight break-words hyphens-auto">
-                                                    {lesson.title}
-                                                </Typography>
+                                                <div className="flex items-center space-x-2 mb-1">
+                                                    <Typography variant="h5" className="font-semibold text-foreground leading-tight break-words hyphens-auto flex-1">
+                                                        {lesson.title}
+                                                    </Typography>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRenameLesson(lesson);
+                                                        }}
+                                                        className="p-1 hover:bg-orange-100 rounded-md transition-colors group flex-shrink-0"
+                                                        title="Renommer la leçon"
+                                                    >
+                                                        <Edit3 className="w-4 h-4 text-orange-600 group-hover:text-orange-700" />
+                                                    </button>
+                                                </div>
                                                 <div className="flex flex-wrap items-center gap-2 mt-1">
                                                     <Badge variant="secondary" className="text-xs flex-shrink-0">
                                                         {getDifficultyLabel(lesson.difficulty)}
@@ -550,8 +620,9 @@ export default function Dashboard() {
             {/* Loading Modal for Question Generation */}
             {isGeneratingQuestions && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <Card className="widget-card p-8 max-w-md w-full mx-4">
+                    <Card className="widget-card p-8 max-w-lg w-full mx-4">
                         <div className="text-center space-y-6">
+                            {/* AI Generation Info */}
                             <div className="w-16 h-16 bg-orange-soft rounded-xl flex items-center justify-center mx-auto">
                                 <Brain className="w-8 h-8 text-orange-700 animate-pulse" />
                             </div>
@@ -570,9 +641,49 @@ export default function Dashboard() {
                             </div>
                             <div className="text-sm text-muted-foreground">
                                 <Typography variant="caption" color="muted">
-                                    Cela peut prendre quelques secondes...
+                                    Cela peut prendre quelques dizaines de secondes...
                                 </Typography>
                             </div>
+
+                            {/* Subway Surfers Video */}
+                            {showSubwaySurfers && (
+                                <div className="relative mt-6">
+                                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4">
+                                        <Typography variant="h6" className="text-white font-bold mb-3">
+                                            🎮 Pendant que l&apos;IA travaille...
+                                        </Typography>
+                                        <div className="relative bg-black rounded-lg overflow-hidden flex justify-center">
+                                            <video
+                                                autoPlay
+                                                loop
+                                                muted
+                                                playsInline
+                                                className="h-80 w-auto object-contain"
+                                            >
+                                                <source src="/videos/subway-surfers.mp4" type="video/mp4" />
+                                                <source src="/videos/subway-surfers.webm" type="video/webm" />
+                                                <div className="flex items-center justify-center h-80 bg-gray-800 text-white">
+                                                    <Play className="w-8 h-8 mr-2" />
+                                                    Subway Surfers Gameplay
+                                                </div>
+                                            </video>
+                                            <div className="absolute top-2 right-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    onClick={() => setShowSubwaySurfers(false)}
+                                                    className="bg-white/90 hover:bg-white text-gray-800 px-2 py-1 text-xs"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <Typography variant="caption" className="text-white/80 mt-2 block">
+                                            Amusez-vous pendant que l&apos;IA génère vos questions ! 🚀
+                                        </Typography>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>
@@ -591,6 +702,18 @@ export default function Dashboard() {
                     }}
                 />
             )}
+
+            {/* Rename Lesson Modal */}
+            <RenameLessonModal
+                isOpen={showRenameModal}
+                onClose={() => {
+                    setShowRenameModal(false);
+                    setLessonToRename(null);
+                }}
+                onConfirm={handleConfirmRename}
+                currentTitle={lessonToRename?.title || ''}
+                isLoading={isRenamingLesson}
+            />
         </div>
     );
 }

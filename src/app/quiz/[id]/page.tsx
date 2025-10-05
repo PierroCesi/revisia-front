@@ -6,7 +6,7 @@ import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { lessonsAPI, Question, Document } from '@/lib/api';
 import { Button, Card, Typography, Badge, ErrorAlert } from '@/components/ui';
-import { Brain, ArrowLeft, ArrowRight, RotateCcw, UserPlus, Lock } from 'lucide-react';
+import { Brain, ArrowLeft, ArrowRight, RotateCcw, UserPlus, Lock, Trash2 } from 'lucide-react';
 import ConfettiAnimation from '@/components/ConfettiAnimation';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useGuestSession } from '@/hooks/useGuestSession';
@@ -38,6 +38,8 @@ export default function QuizPage({ params }: QuizPageProps) {
     const [resettingQuiz, setResettingQuiz] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [deletingQuestion, setDeletingQuestion] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [guestResults, setGuestResults] = useState<{
         lesson_id: number;
         lesson_title: string;
@@ -236,6 +238,43 @@ export default function QuizPage({ params }: QuizPageProps) {
         }
     };
 
+    const deleteQuestion = async () => {
+        if (!id || questions.length === 0) return;
+
+        setDeletingQuestion(true);
+        try {
+            const lessonId = parseInt(id);
+            const currentQuestion = questions[currentQuestionIndex];
+            const currentSessionId = urlSessionId || sessionId;
+
+            await lessonsAPI.deleteQuestion(lessonId, currentQuestion.id, currentSessionId || undefined);
+
+            // Mettre à jour l'état local
+            const updatedQuestions = questions.filter(q => q.id !== currentQuestion.id);
+            setQuestions(updatedQuestions);
+
+            // Ajuster l'index de la question courante si nécessaire
+            if (currentQuestionIndex >= updatedQuestions.length) {
+                setCurrentQuestionIndex(Math.max(0, updatedQuestions.length - 1));
+            }
+
+            // Supprimer les réponses liées à cette question
+            const newSelectedAnswers = { ...selectedAnswers };
+            const newOpenAnswers = { ...openAnswers };
+            delete newSelectedAnswers[currentQuestion.id];
+            delete newOpenAnswers[currentQuestion.id];
+            setSelectedAnswers(newSelectedAnswers);
+            setOpenAnswers(newOpenAnswers);
+
+            setShowDeleteConfirm(false);
+        } catch (error) {
+            console.error('Erreur lors de la suppression de la question:', error);
+            setError('Erreur lors de la suppression de la question. Veuillez réessayer.');
+        } finally {
+            setDeletingQuestion(false);
+        }
+    };
+
     const getScore = () => {
         let correct = 0;
         questions.forEach(question => {
@@ -405,36 +444,79 @@ export default function QuizPage({ params }: QuizPageProps) {
                 </div>
 
                 {/* Results */}
-                <main className="max-w-4xl mx-auto px-6 py-8 relative z-10">
-                    <Card className="widget-card p-8 text-center">
-                        <div className="space-y-6">
+                <main className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 relative z-10">
+                    <Card className="widget-card p-4 sm:p-6 lg:p-8 text-center">
+                        <div className="space-y-4 sm:space-y-6">
                             <div className="space-y-2">
-                                <Typography variant="h2" className="text-3xl font-bold text-foreground">
+                                <Typography variant="h3" className="text-2xl sm:text-3xl font-bold text-foreground">
                                     Résultats du Quiz
                                 </Typography>
-                                <Typography variant="h4" className="text-orange-700">
+                                <Typography variant="h5" className="text-orange-700 text-lg sm:text-xl">
                                     {document?.title}
                                 </Typography>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="text-6xl font-bold text-orange-700 mb-2">{percentage}%</div>
-                                <Typography variant="body" className="text-lg text-muted-foreground">
+                            <div className="space-y-3 sm:space-y-4">
+                                <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-orange-700 mb-2">{percentage}%</div>
+                                <Typography variant="body" className="text-base sm:text-lg text-muted-foreground">
                                     {correct} bonnes réponses sur {total} questions QCM
                                 </Typography>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                                 <Button
                                     onClick={resetQuiz}
                                     disabled={resettingQuiz}
-                                    className="bg-orange-primary text-white hover:bg-orange-700"
+                                    size="sm"
+                                    className="bg-orange-primary text-white hover:bg-orange-700 px-4"
                                 >
                                     <RotateCcw className="w-4 h-4 mr-2" />
                                     {resettingQuiz ? 'Réinitialisation...' : 'Refaire le quiz'}
                                 </Button>
                                 <Link href="/dashboard">
-                                    <Button variant="outline" className="border-orange-200 text-orange-700 hover:bg-orange-50">
+                                    <Button variant="outline" size="sm" className="border-orange-200 text-orange-700 hover:bg-orange-50 px-4">
+                                        <ArrowLeft className="w-4 h-4 mr-2" />
+                                        Retour au tableau de bord
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
+                    </Card>
+                </main>
+            </div>
+        );
+    }
+
+    // Vérifier s'il reste des questions
+    if (questions.length === 0) {
+        return (
+            <div className="min-h-screen dashboard-gradient relative overflow-hidden">
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-20 left-10 w-32 h-32 bg-blue-soft/20 rounded-full blur-xl animate-float"></div>
+                    <div className="absolute top-40 right-20 w-24 h-24 bg-orange-soft/20 rounded-full blur-xl animate-float-delayed"></div>
+                    <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-purple-soft/20 rounded-full blur-xl animate-float"></div>
+                </div>
+
+                <main className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 relative z-10">
+                    <Card className="widget-card p-4 sm:p-6 lg:p-8 text-center">
+                        <div className="space-y-4 sm:space-y-6">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto">
+                                <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                            </div>
+                            <div className="space-y-2">
+                                <Typography variant="h3" className="text-2xl sm:text-3xl font-bold text-foreground">
+                                    Plus de questions
+                                </Typography>
+                                <Typography variant="h5" className="text-orange-700 text-lg sm:text-xl">
+                                    {document?.title}
+                                </Typography>
+                            </div>
+                            <Typography variant="body" className="text-base sm:text-lg text-muted-foreground">
+                                Toutes les questions de ce quiz ont été supprimées.
+                            </Typography>
+                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                                <Link href="/dashboard">
+                                    <Button size="sm" className="bg-orange-primary text-white hover:bg-orange-700 px-4">
                                         <ArrowLeft className="w-4 h-4 mr-2" />
                                         Retour au tableau de bord
                                     </Button>
@@ -460,15 +542,15 @@ export default function QuizPage({ params }: QuizPageProps) {
 
             {/* Progress Bar */}
             <div className="glass-card border-b-0">
-                <div className="max-w-4xl mx-auto px-6 py-4">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
                     <div className="flex items-center justify-between">
-                        <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden mr-4">
+                        <div className="flex-1 h-2 sm:h-3 bg-gray-200 rounded-full overflow-hidden mr-3 sm:mr-4">
                             <div
-                                className="h-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full transition-all duration-500 ease-out"
+                                className="h-2 sm:h-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full transition-all duration-500 ease-out"
                                 style={{ width: `${progress}%` }}
                             ></div>
                         </div>
-                        <Badge variant="secondary" className="bg-orange-soft text-orange-700">
+                        <Badge variant="secondary" className="bg-orange-soft text-orange-700 text-xs sm:text-sm">
                             Question {currentQuestionIndex + 1} sur {questions.length}
                         </Badge>
                     </div>
@@ -476,39 +558,51 @@ export default function QuizPage({ params }: QuizPageProps) {
             </div>
 
             {/* Quiz Content */}
-            <main className="max-w-4xl mx-auto px-6 py-8 relative z-10">
-                <Card className="widget-card p-8">
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <Badge
-                                variant={currentQuestion.difficulty === 'easy' ? 'success' :
-                                    currentQuestion.difficulty === 'medium' ? 'warning' : 'error'}
-                                className="text-xs"
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 relative z-10">
+                <Card className="widget-card p-4 sm:p-6 lg:p-8">
+                    <div className="space-y-4 sm:space-y-6">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                                <Badge
+                                    variant={currentQuestion.difficulty === 'easy' ? 'success' :
+                                        currentQuestion.difficulty === 'medium' ? 'warning' : 'error'}
+                                    className="text-xs"
+                                >
+                                    {currentQuestion.difficulty === 'easy' ? 'Facile' :
+                                        currentQuestion.difficulty === 'medium' ? 'Moyen' : 'Difficile'}
+                                </Badge>
+                                <Badge variant="secondary" className="bg-blue-soft text-blue-700 text-xs">
+                                    {currentQuestion.question_type === 'qcm' ? 'QCM' : 'Question ouverte'}
+                                </Badge>
+                            </div>
+
+                            <Button
+                                onClick={() => setShowDeleteConfirm(true)}
+                                variant="outline"
+                                size="sm"
+                                className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 px-2 py-1.5 text-xs"
+                                disabled={deletingQuestion}
                             >
-                                {currentQuestion.difficulty === 'easy' ? 'Facile' :
-                                    currentQuestion.difficulty === 'medium' ? 'Moyen' : 'Difficile'}
-                            </Badge>
-                            <Badge variant="secondary" className="bg-blue-soft text-blue-700 text-xs">
-                                {currentQuestion.question_type === 'qcm' ? 'QCM' : 'Question ouverte'}
-                            </Badge>
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
                         </div>
 
-                        <Typography variant="h3" className="font-semibold text-foreground leading-relaxed">
+                        <Typography variant="h4" className="font-semibold text-foreground leading-relaxed text-lg sm:text-xl lg:text-2xl">
                             {currentQuestion.question_text}
                         </Typography>
 
                         {currentQuestion.question_type === 'qcm' ? (
-                            <div className="space-y-3">
+                            <div className="space-y-2 sm:space-y-3">
                                 {currentQuestion.answers.map((answer) => (
                                     <button
                                         key={answer.id}
                                         onClick={() => handleAnswerSelect(currentQuestion.id, answer.id)}
-                                        className={`w-full text-left p-4 border-2 rounded-xl transition-all duration-200 ${selectedAnswers[currentQuestion.id] === answer.id
+                                        className={`w-full text-left p-3 sm:p-4 border-2 rounded-lg sm:rounded-xl transition-all duration-200 ${selectedAnswers[currentQuestion.id] === answer.id
                                             ? 'border-orange-500 bg-orange-soft/30 shadow-md'
                                             : 'border-gray-200 hover:border-orange-300 hover:bg-orange-soft/10'
                                             }`}
                                     >
-                                        <Typography variant="body" className="text-foreground">
+                                        <Typography variant="body" className="text-foreground text-sm sm:text-base">
                                             {answer.answer_text}
                                         </Typography>
                                     </button>
@@ -517,8 +611,8 @@ export default function QuizPage({ params }: QuizPageProps) {
                         ) : (
                             <div>
                                 <textarea
-                                    className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200"
-                                    rows={4}
+                                    className="w-full p-3 sm:p-4 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 text-sm sm:text-base"
+                                    rows={3}
                                     placeholder="Tapez votre réponse ici..."
                                     value={openAnswers[currentQuestion.id] || ''}
                                     onChange={(e) => handleOpenAnswerChange(currentQuestion.id, e.target.value)}
@@ -530,27 +624,29 @@ export default function QuizPage({ params }: QuizPageProps) {
             </main>
 
             {/* Navigation Buttons */}
-            <div className="max-w-4xl mx-auto px-6 pb-8 relative z-10">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-4 sm:pb-8 relative z-10">
                 <div className="flex justify-between">
                     <Button
                         onClick={previousQuestion}
                         disabled={currentQuestionIndex === 0}
                         variant="outline"
-                        className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                        size="sm"
+                        className="border-gray-200 text-gray-700 hover:bg-gray-50 px-3 sm:px-4"
                     >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Précédent
+                        <ArrowLeft className="w-4 h-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Précédent</span>
                     </Button>
 
                     <Button
                         onClick={nextQuestion}
                         disabled={submittingAnswers}
-                        className="bg-orange-primary text-white hover:bg-orange-700"
+                        size="sm"
+                        className="bg-orange-primary text-white hover:bg-orange-700 px-3 sm:px-4"
                     >
                         {submittingAnswers ? 'Soumission...' :
                             currentQuestionIndex === questions.length - 1 ? 'Terminer' : 'Suivant'}
                         {currentQuestionIndex !== questions.length - 1 && (
-                            <ArrowRight className="w-4 h-4 ml-2" />
+                            <ArrowRight className="w-4 h-4 ml-1 sm:ml-2" />
                         )}
                     </Button>
                 </div>
@@ -566,6 +662,44 @@ export default function QuizPage({ params }: QuizPageProps) {
                         window.location.reload();
                     }}
                 />
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <Card className="widget-card p-6 max-w-md w-full">
+                        <div className="space-y-4">
+                            <div className="text-center">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Trash2 className="w-6 h-6 text-red-600" />
+                                </div>
+                                <Typography variant="h4" className="font-bold text-gray-900 mb-2">
+                                    Supprimer cette question ?
+                                </Typography>
+                                <Typography variant="body" className="text-gray-600">
+                                    Cette action est irréversible. La question et toutes les réponses associées seront définitivement supprimées.
+                                </Typography>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    variant="outline"
+                                    className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
+                                    disabled={deletingQuestion}
+                                >
+                                    Annuler
+                                </Button>
+                                <Button
+                                    onClick={deleteQuestion}
+                                    className="flex-1 bg-red-600 text-white hover:bg-red-700"
+                                    disabled={deletingQuestion}
+                                >
+                                    {deletingQuestion ? 'Suppression...' : 'Supprimer'}
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
             )}
         </div>
     );
