@@ -41,7 +41,7 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName, 
         const newCount = Math.min(questionCount, maxQuestions);
         setQuestionCount(newCount);
         setQuestionCountInput(newCount.toString());
-    }, [maxQuestions]);
+    }, [maxQuestions, questionCount]);
 
     // Fonction pour gérer les changements dans l'input
     const handleQuestionCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {

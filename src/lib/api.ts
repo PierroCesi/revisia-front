@@ -286,7 +286,24 @@ export const lessonsAPI = {
         return response.data;
     },
 
-    getAttempts: async (lessonId: number): Promise<{ attempt_number: number; score: number; completed_at: string }[]> => {
+    getAttempts: async (lessonId: number): Promise<{
+        attempt_number: number;
+        score: number;
+        completed_at: string;
+        user_answers: Array<{
+            question_id: number;
+            question_text: string;
+            difficulty: 'easy' | 'medium' | 'hard';
+            user_answer_id: number | null;
+            user_answer_text: string | null;
+            is_correct: boolean;
+            all_answers: Array<{
+                id: number;
+                text: string;
+                is_correct: boolean;
+            }>;
+        }>;
+    }[]> => {
         const response = await api.get(`/auth/lessons/${lessonId}/attempts/`);
         return response.data;
     },

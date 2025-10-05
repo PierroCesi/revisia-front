@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button, Card, Typography, AlertDialog } from '@/components/ui';
 import { X, TrendingUp, BarChart3, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import AttemptDetailsModal from './AttemptDetailsModal';
 
 interface ScoreChartModalProps {
     isOpen: boolean;
@@ -20,12 +21,32 @@ interface ScoreData {
     date: string;
 }
 
+
 export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle, lessonAverageScore, onDelete }: ScoreChartModalProps) {
     const [scoreHistory, setScoreHistory] = useState<ScoreData[]>([]);
     const [loading, setLoading] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [chartType, setChartType] = useState<'line' | 'bar'>('line');
+    const [showAttemptDetails, setShowAttemptDetails] = useState(false);
+    const [selectedAttempt, setSelectedAttempt] = useState<{
+        attempt_number: number;
+        score: number;
+        completed_at: string;
+        user_answers: Array<{
+            question_id: number;
+            question_text: string;
+            difficulty: 'easy' | 'medium' | 'hard';
+            user_answer_id: number | null;
+            user_answer_text: string | null;
+            is_correct: boolean;
+            all_answers: Array<{
+                id: number;
+                text: string;
+                is_correct: boolean;
+            }>;
+        }>;
+    } | null>(null);
 
     const loadScoreHistory = useCallback(async () => {
         setLoading(true);
@@ -92,6 +113,21 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
         }
     };
 
+    const handleAttemptClick = async (attemptNumber: number) => {
+        try {
+            const { lessonsAPI } = await import('@/lib/api');
+            const attempts = await lessonsAPI.getAttempts(lessonId);
+            const attemptData = attempts.find(attempt => attempt.attempt_number === attemptNumber);
+
+            if (attemptData) {
+                setSelectedAttempt(attemptData);
+                setShowAttemptDetails(true);
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des détails de la tentative:', error);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
             <Card className="widget-card max-w-4xl w-full p-4 sm:p-6 relative max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
@@ -153,6 +189,58 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                         </Typography>
                         <Typography variant="caption" color="muted" className="break-words">Progression</Typography>
                     </Card>
+                </div>
+
+                {/* Attempts List */}
+                <div className="mb-6">
+                    <Typography variant="h6" className="font-semibold mb-4">
+                        Historique des tentatives
+                    </Typography>
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                        {scoreHistory.map((attempt) => (
+                            <Card
+                                key={attempt.attempt}
+                                className="p-3 cursor-pointer hover:shadow-md transition-shadow duration-200"
+                                onClick={() => handleAttemptClick(attempt.attempt)}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <Typography variant="caption" className="font-bold text-orange-700">
+                                                {attempt.attempt}
+                                            </Typography>
+                                        </div>
+                                        <div>
+                                            <Typography variant="body" className="font-medium">
+                                                Tentative {attempt.attempt}
+                                            </Typography>
+                                            <Typography variant="caption" color="muted">
+                                                {attempt.date}
+                                            </Typography>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <Typography variant="h6" className={`font-bold ${attempt.score >= 80 ? 'text-green-600' :
+                                            attempt.score >= 60 ? 'text-yellow-600' :
+                                                'text-red-600'
+                                            }`}>
+                                            {attempt.score}%
+                                        </Typography>
+                                        <Typography variant="caption" color="muted">
+                                            Cliquez pour voir les détails
+                                        </Typography>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Chart Instructions */}
+                <div className="text-center mb-4">
+                    <Typography variant="caption" color="muted" className="text-sm">
+                        💡 Cliquez sur un point ou une barre pour voir le détail des réponses
+                    </Typography>
                 </div>
 
                 {/* Chart Type Toggle */}
@@ -222,8 +310,25 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                                         dataKey="score"
                                         stroke="#ea580c"
                                         strokeWidth={2}
-                                        dot={{ fill: '#ea580c', strokeWidth: 2, r: 4 }}
-                                        activeDot={{ r: 6, stroke: '#ea580c', strokeWidth: 2 }}
+                                        dot={{
+                                            fill: '#ea580c',
+                                            strokeWidth: 2,
+                                            r: 4,
+                                            cursor: 'pointer'
+                                        }}
+                                        activeDot={{
+                                            r: 6,
+                                            stroke: '#ea580c',
+                                            strokeWidth: 2,
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={(data) => {
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            const chartData = data as any;
+                                            if (chartData && chartData.attempt) {
+                                                handleAttemptClick(chartData.attempt);
+                                            }
+                                        }}
                                     />
                                 </LineChart>
                             ) : (
@@ -258,6 +363,14 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                                         dataKey="score"
                                         fill="#ea580c"
                                         radius={[4, 4, 0, 0]}
+                                        cursor="pointer"
+                                        onClick={(data) => {
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            const chartData = data as any;
+                                            if (chartData && chartData.attempt) {
+                                                handleAttemptClick(chartData.attempt);
+                                            }
+                                        }}
                                     />
                                 </BarChart>
                             )}
@@ -294,6 +407,19 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                 variant="destructive"
                 isLoading={isDeleting}
             />
+
+            {/* Attempt Details Modal */}
+            {selectedAttempt && (
+                <AttemptDetailsModal
+                    isOpen={showAttemptDetails}
+                    onClose={() => {
+                        setShowAttemptDetails(false);
+                        setSelectedAttempt(null);
+                    }}
+                    attemptData={selectedAttempt}
+                    lessonTitle={lessonTitle}
+                />
+            )}
         </div>
     );
 }

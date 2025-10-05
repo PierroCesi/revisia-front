@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import AISettingsModal, { AISettings } from '@/components/AISettingsModal';
 import ScoreChartModal from '@/components/ScoreChartModal';
+import AttemptDetailsModal from '@/components/AttemptDetailsModal';
 import RoleLimits from '@/components/RoleLimits';
 
 // Helper function pour mapper les difficultés
@@ -40,6 +41,25 @@ export default function Dashboard() {
     const [showAISettings, setShowAISettings] = useState(false);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [showScoreChart, setShowScoreChart] = useState(false);
+    const [showAttemptDetails, setShowAttemptDetails] = useState(false);
+    const [selectedAttempt, setSelectedAttempt] = useState<{
+        attempt_number: number;
+        score: number;
+        completed_at: string;
+        user_answers: Array<{
+            question_id: number;
+            question_text: string;
+            difficulty: 'easy' | 'medium' | 'hard';
+            user_answer_id: number | null;
+            user_answer_text: string | null;
+            is_correct: boolean;
+            all_answers: Array<{
+                id: number;
+                text: string;
+                is_correct: boolean;
+            }>;
+        }>;
+    } | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
     const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
@@ -210,6 +230,26 @@ export default function Dashboard() {
         }
     };
 
+    const handleLastScoreClick = async (lesson: Lesson) => {
+        try {
+            // Définir la leçon sélectionnée pour l'AttemptDetailsModal
+            setSelectedLesson(lesson);
+
+            const attempts = await lessonsAPI.getAttempts(lesson.id);
+            if (attempts.length > 0) {
+                // Prendre la dernière tentative (la plus récente)
+                const lastAttempt = attempts[attempts.length - 1];
+                setSelectedAttempt(lastAttempt);
+                setShowAttemptDetails(true);
+            } else {
+                // Pas de tentatives disponibles
+                console.log('Aucune tentative disponible pour cette leçon');
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement de la dernière tentative:', error);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -328,7 +368,7 @@ export default function Dashboard() {
                                     {/* Desktop layout - inchangé */}
                                     <div className="hidden md:flex items-center justify-between">
                                         <div className="flex items-center space-x-4">
-                                            <div className="w-12 h-12 bg-orange-soft rounded-xl flex items-center justify-center">
+                                            <div className="w-12 h-12 bg-orange-soft rounded-xl flex items-center justify-center flex-shrink-0">
                                                 <BookOpen className="w-6 h-6 text-orange-700" />
                                             </div>
                                             <div>
@@ -358,11 +398,11 @@ export default function Dashboard() {
                                             </div>
 
                                             {/* Dernier Score */}
-                                            <div className="text-center">
-                                                <Typography variant="h4" className={`font-bold ${getScoreColor(lesson.last_score)}`}>
+                                            <div className="flex flex-col items-center justify-center cursor-pointer bg-orange-50 hover:bg-orange-100 rounded-lg p-3 transition-all duration-200 border border-orange-200 hover:border-orange-300 hover:shadow-sm group" onClick={(e) => { e.stopPropagation(); handleLastScoreClick(lesson); }}>
+                                                <Typography variant="h4" className={`font-bold group-hover:scale-105 transition-transform ${getScoreColor(lesson.last_score)}`}>
                                                     {lesson.last_score}%
                                                 </Typography>
-                                                <Typography variant="caption" color="muted">Dernier score</Typography>
+                                                <Typography variant="caption" color="muted" className="group-hover:text-orange-700 transition-colors">Dernier score</Typography>
                                             </div>
 
                                             {/* Action Button */}
@@ -427,11 +467,13 @@ export default function Dashboard() {
                                                 </div>
 
                                                 {/* Dernier Score */}
-                                                <div className="text-center flex-1">
-                                                    <Typography variant="h4" className={`font-bold text-lg ${getScoreColor(lesson.last_score)}`}>
+                                                <div className="flex flex-col items-center justify-center flex-1 cursor-pointer bg-orange-50 hover:bg-orange-100 rounded-lg p-3 transition-all duration-200 border border-orange-200 hover:border-orange-300 hover:shadow-sm group" onClick={(e) => { e.stopPropagation(); handleLastScoreClick(lesson); }}>
+                                                    <Typography variant="h4" className={`font-bold text-lg ${getScoreColor(lesson.last_score)} group-hover:scale-105 transition-transform`}>
                                                         {lesson.last_score}%
                                                     </Typography>
-                                                    <Typography variant="caption" color="muted" className="text-xs">Dernier score</Typography>
+                                                    <Typography variant="caption" color="muted" className="text-xs group-hover:text-orange-700 transition-colors">
+                                                        Dernier score
+                                                    </Typography>
                                                 </div>
                                             </div>
 
@@ -491,6 +533,19 @@ export default function Dashboard() {
                 lessonAverageScore={selectedLesson?.average_score}
                 onDelete={handleDeleteLesson}
             />
+
+            {/* Attempt Details Modal */}
+            {selectedAttempt && (
+                <AttemptDetailsModal
+                    isOpen={showAttemptDetails}
+                    onClose={() => {
+                        setShowAttemptDetails(false);
+                        setSelectedAttempt(null);
+                    }}
+                    attemptData={selectedAttempt}
+                    lessonTitle={selectedLesson?.title || ''}
+                />
+            )}
 
             {/* Loading Modal for Question Generation */}
             {isGeneratingQuestions && (
