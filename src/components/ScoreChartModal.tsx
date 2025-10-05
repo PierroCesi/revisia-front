@@ -93,13 +93,13 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="widget-card max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+            <Card className="widget-card max-w-4xl w-full p-4 sm:p-6 relative max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-orange-soft rounded-xl flex items-center justify-center">
-                            <BarChart3 className="w-5 h-5 text-orange-700" />
+                        <div className="w-12 h-12 bg-orange-soft rounded-xl flex items-center justify-center p-2">
+                            <BarChart3 className="w-6 h-6 text-orange-700" />
                         </div>
                         <div>
                             <Typography variant="h5" className="font-bold text-foreground">
@@ -134,21 +134,21 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                    <Card className="p-4 text-center">
-                        <Typography variant="h4" className="font-bold text-orange-700">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <Card className="p-4 text-center hover:shadow-md transition-shadow duration-200">
+                        <Typography variant="h4" className="font-bold text-orange-700 mb-1">
                             {averageScore}%
                         </Typography>
                         <Typography variant="caption" color="muted" className="break-words">Score moyen</Typography>
                     </Card>
-                    <Card className="p-4 text-center">
-                        <Typography variant="h4" className="font-bold text-green-600">
+                    <Card className="p-4 text-center hover:shadow-md transition-shadow duration-200">
+                        <Typography variant="h4" className="font-bold text-green-600 mb-1">
                             {bestScore}%
                         </Typography>
                         <Typography variant="caption" color="muted" className="break-words">Meilleur score</Typography>
                     </Card>
-                    <Card className="p-4 text-center">
-                        <Typography variant="h4" className={`font-bold ${improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <Card className="p-4 text-center hover:shadow-md transition-shadow duration-200 sm:col-span-2 lg:col-span-1">
+                        <Typography variant="h4" className={`font-bold mb-1 ${improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {improvement >= 0 ? '+' : ''}{improvement}%
                         </Typography>
                         <Typography variant="caption" color="muted" className="break-words">Progression</Typography>
@@ -180,7 +180,7 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                 </div>
 
                 {/* Chart */}
-                <div className="h-80 mb-6">
+                <div className="h-64 sm:h-80 mb-6">
                     {loading ? (
                         <div className="flex items-center justify-center h-full">
                             <Typography variant="body" color="muted">Chargement...</Typography>
@@ -188,16 +188,21 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                     ) : scoreHistory.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                             {chartType === 'line' ? (
-                                <LineChart data={scoreHistory}>
+                                <LineChart data={scoreHistory} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                                     <XAxis
                                         dataKey="date"
-                                        tick={{ fontSize: 12 }}
+                                        tick={{ fontSize: 10 }}
+                                        interval="preserveStartEnd"
+                                        angle={-45}
+                                        textAnchor="end"
+                                        height={60}
                                     />
                                     <YAxis
                                         domain={[0, 100]}
-                                        tick={{ fontSize: 12 }}
+                                        tick={{ fontSize: 10 }}
                                         tickFormatter={(value) => `${value}%`}
+                                        width={40}
                                     />
                                     <Tooltip
                                         formatter={(value: number) => [`${value}%`, 'Score']}
@@ -206,30 +211,35 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                                             backgroundColor: 'white',
                                             border: '1px solid #e5e7eb',
                                             borderRadius: '8px',
-                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                            fontSize: '12px',
+                                            padding: '8px'
                                         }}
+                                        wrapperStyle={{ outline: 'none' }}
                                     />
                                     <Line
                                         type="monotone"
                                         dataKey="score"
                                         stroke="#ea580c"
-                                        strokeWidth={3}
-                                        dot={{ fill: '#ea580c', strokeWidth: 2, r: 6 }}
-                                        activeDot={{ r: 8, stroke: '#ea580c', strokeWidth: 2 }}
+                                        strokeWidth={2}
+                                        dot={{ fill: '#ea580c', strokeWidth: 2, r: 4 }}
+                                        activeDot={{ r: 6, stroke: '#ea580c', strokeWidth: 2 }}
                                     />
                                 </LineChart>
                             ) : (
-                                <BarChart data={scoreHistory}>
+                                <BarChart data={scoreHistory} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                                     <XAxis
                                         dataKey="attempt"
-                                        tick={{ fontSize: 12 }}
-                                        tickFormatter={(value) => `Essai ${value}`}
+                                        tick={{ fontSize: 10 }}
+                                        tickFormatter={(value) => `E${value}`}
+                                        width={40}
                                     />
                                     <YAxis
                                         domain={[0, 100]}
-                                        tick={{ fontSize: 12 }}
+                                        tick={{ fontSize: 10 }}
                                         tickFormatter={(value) => `${value}%`}
+                                        width={40}
                                     />
                                     <Tooltip
                                         formatter={(value: number) => [`${value}%`, 'Score']}
@@ -238,8 +248,11 @@ export default function ScoreChartModal({ isOpen, onClose, lessonId, lessonTitle
                                             backgroundColor: 'white',
                                             border: '1px solid #e5e7eb',
                                             borderRadius: '8px',
-                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                            fontSize: '12px',
+                                            padding: '8px'
                                         }}
+                                        wrapperStyle={{ outline: 'none' }}
                                     />
                                     <Bar
                                         dataKey="score"

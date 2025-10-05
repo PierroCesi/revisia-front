@@ -393,19 +393,19 @@ export default function Dashboard() {
                                     {/* Mobile layout - nouveau */}
                                     <div className="md:hidden">
                                         {/* Header avec icône et titre */}
-                                        <div className="flex items-center space-x-3 mb-4">
-                                            <div className="w-10 h-10 bg-orange-soft rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <div className="flex items-start space-x-3 mb-4">
+                                            <div className="w-10 h-10 bg-orange-soft rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
                                                 <BookOpen className="w-5 h-5 text-orange-700" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <Typography variant="h5" className="font-semibold text-foreground mb-1 truncate">
+                                                <Typography variant="h5" className="font-semibold text-foreground mb-1 leading-tight break-words hyphens-auto">
                                                     {lesson.title}
                                                 </Typography>
-                                                <div className="flex items-center space-x-2">
-                                                    <Badge variant="secondary" className="text-xs">
+                                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                    <Badge variant="secondary" className="text-xs flex-shrink-0">
                                                         {getDifficultyLabel(lesson.difficulty)}
                                                     </Badge>
-                                                    <Typography variant="caption" color="muted">
+                                                    <Typography variant="caption" color="muted" className="flex-shrink-0">
                                                         {lesson.total_questions} questions
                                                     </Typography>
                                                 </div>
@@ -413,11 +413,11 @@ export default function Dashboard() {
                                         </div>
 
                                         {/* Stats et bouton */}
-                                        <div className="flex flex-col space-y-4">
+                                        <div className="flex flex-col space-y-3">
                                             {/* Stats */}
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between px-1">
                                                 {/* Nombre de tentatives */}
-                                                <div className="text-center">
+                                                <div className="text-center flex-1">
                                                     <Typography variant="h4" className="font-bold text-blue-700 text-lg">
                                                         {lesson.total_attempts}
                                                     </Typography>
@@ -427,7 +427,7 @@ export default function Dashboard() {
                                                 </div>
 
                                                 {/* Dernier Score */}
-                                                <div className="text-center">
+                                                <div className="text-center flex-1">
                                                     <Typography variant="h4" className={`font-bold text-lg ${getScoreColor(lesson.last_score)}`}>
                                                         {lesson.last_score}%
                                                     </Typography>
