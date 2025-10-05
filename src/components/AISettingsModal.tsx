@@ -24,6 +24,7 @@ export interface AISettings {
 export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName, userEducationLevel }: AISettingsModalProps) {
     const { maxQuestions, isGuest, isFree } = useUserRole();
     const [questionCount, setQuestionCount] = useState(Math.min(10, maxQuestions));
+    const [questionCountInput, setQuestionCountInput] = useState(Math.min(10, maxQuestions).toString());
     const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
     const [educationLevel, setEducationLevel] = useState(userEducationLevel || '');
     const [instructions, setInstructions] = useState('');
@@ -35,18 +36,56 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName, 
         }
     }, [userEducationLevel]);
 
-    // Ajuster le nombre de questions selon les limites
+    // Synchroniser l'input avec la valeur numérique quand maxQuestions change
     useEffect(() => {
-        if (questionCount > maxQuestions) {
-            setQuestionCount(maxQuestions);
+        const newCount = Math.min(questionCount, maxQuestions);
+        setQuestionCount(newCount);
+        setQuestionCountInput(newCount.toString());
+    }, [maxQuestions]);
+
+    // Fonction pour gérer les changements dans l'input
+    const handleQuestionCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const inputValue = e.target.value;
+        setQuestionCountInput(inputValue);
+
+        // Si le champ est vide, on ne met pas à jour questionCount
+        if (inputValue === '') {
+            return;
         }
-    }, [maxQuestions, questionCount]);
+
+        // Sinon, on parse et valide la valeur
+        const numericValue = parseInt(inputValue);
+        if (!isNaN(numericValue) && numericValue > 0) {
+            const validValue = Math.min(numericValue, maxQuestions);
+            setQuestionCount(validValue);
+            // Si la valeur a été tronquée, on met à jour l'input
+            if (validValue !== numericValue) {
+                setQuestionCountInput(validValue.toString());
+            }
+        }
+    };
+
+    // Fonction pour gérer la perte de focus (validation finale)
+    const handleQuestionCountBlur = () => {
+        if (questionCountInput === '') {
+            // Si le champ est vide, on remet la valeur par défaut
+            const defaultValue = Math.min(10, maxQuestions);
+            setQuestionCount(defaultValue);
+            setQuestionCountInput(defaultValue.toString());
+        }
+    };
 
     if (!isOpen) return null;
 
     const handleConfirm = () => {
+        // S'assurer qu'on a une valeur valide pour questionCount
+        let finalQuestionCount = questionCount;
+        if (questionCountInput === '') {
+            finalQuestionCount = Math.min(10, maxQuestions);
+        }
+
         onConfirm({
-            questionCount,
+            questionCount: finalQuestionCount,
             difficulty,
             questionTypes: ['qcm'], // Seulement QCM
             educationLevel: educationLevel || undefined,
@@ -100,11 +139,9 @@ export default function AISettingsModal({ isOpen, onClose, onConfirm, fileName, 
                         type="number"
                         min="1"
                         max={maxQuestions}
-                        value={questionCount}
-                        onChange={(e) => {
-                            const value = parseInt(e.target.value) || 1;
-                            setQuestionCount(Math.min(value, maxQuestions));
-                        }}
+                        value={questionCountInput}
+                        onChange={handleQuestionCountChange}
+                        onBlur={handleQuestionCountBlur}
                         placeholder="5"
                         helperText={
                             isGuest ? `Mode test : maximum ${maxQuestions} questions` :
