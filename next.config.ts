@@ -5,10 +5,6 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 });
 
 const nextConfig: NextConfig = {
-  // Configuration pour les fichiers statiques
-  trailingSlash: false,
-  // Configuration pour la production
-  output: 'standalone',
   // Optimisations pour Turbopack
   experimental: {
     turbo: {
