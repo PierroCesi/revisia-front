@@ -184,64 +184,64 @@ export default function HomePage() {
                 {/* Hero + Stats Section - Desktop layout */}
                 <section className="hidden lg:block">
                     <div className="grid lg:grid-cols-12 gap-6">
-                        {/* Main hero */}
-                        <div className="lg:col-span-8">
+                    {/* Main hero */}
+                    <div className="lg:col-span-8">
                             <Card className="widget-card p-4 sm:p-6 lg:p-8 h-full">
                                 <div className="space-y-6 sm:space-y-8">
-                                    <div className="space-y-4">
-                                        <Badge variant="secondary" className="bg-orange-soft text-orange-700 border-0 shadow-sm">
-                                            <Sparkles className="w-3 h-3 mr-1" />
-                                            Nouveau
-                                        </Badge>
+                                <div className="space-y-4">
+                                    <Badge variant="secondary" className="bg-orange-soft text-orange-700 border-0 shadow-sm">
+                                        <Sparkles className="w-3 h-3 mr-1" />
+                                        Nouveau
+                                    </Badge>
                                         <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-balance leading-tight">
-                                            Transformez vos <span className="text-orange-700">documents</span> en QCM intelligents
-                                        </h1>
+                                        Transformez vos <span className="text-orange-700">documents</span> en QCM intelligents
+                                    </h1>
                                         <p className="text-base sm:text-lg text-muted-foreground text-balance max-w-2xl">
-                                            Uploadez une photo ou un document, et notre IA génère automatiquement des QCM
-                                            personnalisés pour optimiser vos révisions.
-                                        </p>
-                                    </div>
+                                        Uploadez une photo ou un document, et notre IA génère automatiquement des QCM
+                                        personnalisés pour optimiser vos révisions.
+                                    </p>
+                                </div>
 
-                                    <div
+                                <div
                                         className={`upload-zone rounded-2xl p-4 sm:p-6 lg:p-8 text-center cursor-pointer ${isDragOver ? "drag-over" : ""}`}
-                                        onDragOver={handleDragOver}
-                                        onDragLeave={handleDragLeave}
-                                        onDrop={handleDrop}
-                                        onClick={() => document.getElementById("file-input")?.click()}
-                                    >
-                                        <input
-                                            id="file-input"
-                                            type="file"
-                                            multiple
-                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
-                                            onChange={handleFileSelect}
-                                            className="hidden"
-                                        />
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onClick={() => document.getElementById("file-input")?.click()}
+                                >
+                                    <input
+                                        id="file-input"
+                                        type="file"
+                                        multiple
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                    />
 
                                         <div className="space-y-3 sm:space-y-4">
                                             <div className="flex justify-center space-x-1 sm:space-x-2">
                                                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
                                                     <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
-                                                </div>
+                                            </div>
                                                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
                                                     <ImageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
-                                                </div>
+                                            </div>
                                                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
                                                     <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
-                                                </div>
                                             </div>
+                                        </div>
 
-                                            <div>
+                                        <div>
                                                 <h3 className="text-lg sm:text-xl font-semibold text-orange-700 mb-2">
-                                                    Glissez vos fichiers ici ou cliquez pour sélectionner
-                                                </h3>
+                                                Glissez vos fichiers ici ou cliquez pour sélectionner
+                                            </h3>
                                                 <p className="text-sm sm:text-base text-muted-foreground mb-2">
-                                                    PDF, Word, images, photos manuscrites - Générez vos QCM en quelques secondes
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {getFileSizeMessage(user ? (user.is_premium ? 'premium' : 'free') : 'guest')}
-                                                </p>
-                                            </div>
+                                                PDF, Word, images, photos manuscrites - Générez vos QCM en quelques secondes
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {getFileSizeMessage(user ? (user.is_premium ? 'premium' : 'free') : 'guest')}
+                                            </p>
+                                        </div>
 
                                             <div className="flex flex-wrap justify-center gap-1 sm:gap-2 text-xs text-muted-foreground">
                                                 <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.PDF</span>
@@ -249,33 +249,33 @@ export default function HomePage() {
                                                 <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.JPG</span>
                                                 <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.PNG</span>
                                                 <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">Photos</span>
-                                            </div>
                                         </div>
                                     </div>
+                                </div>
 
 
                                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                                        {user ? (
-                                            <Link href="/dashboard">
-                                                <Button
-                                                    size="lg"
-                                                    className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
-                                                >
-                                                    <ImageIcon className="w-4 h-4 mr-2" />
-                                                    Accéder au tableau de bord
-                                                </Button>
-                                            </Link>
-                                        ) : (
-                                            <Link href="/register">
-                                                <Button
-                                                    size="lg"
-                                                    className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
-                                                >
-                                                    <ImageIcon className="w-4 h-4 mr-2" />
-                                                    Essayer gratuitement
-                                                </Button>
-                                            </Link>
-                                        )}
+                                    {user ? (
+                                        <Link href="/dashboard">
+                                            <Button
+                                                size="lg"
+                                                className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                            >
+                                                <ImageIcon className="w-4 h-4 mr-2" />
+                                                Accéder au tableau de bord
+                                            </Button>
+                                        </Link>
+                                    ) : (
+                                        <Link href="/register">
+                                            <Button
+                                                size="lg"
+                                                className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                            >
+                                                <ImageIcon className="w-4 h-4 mr-2" />
+                                                Essayer gratuitement
+                                            </Button>
+                                        </Link>
+                                    )}
                                         <Button
                                             variant="outline"
                                             size="lg"
@@ -287,96 +287,96 @@ export default function HomePage() {
                                                 }
                                             }}
                                         >
-                                            <Play className="w-4 h-4 mr-2" />
-                                            Voir la démo
-                                        </Button>
-                                    </div>
+                                        <Play className="w-4 h-4 mr-2" />
+                                        Voir la démo
+                                    </Button>
+                                </div>
 
                                     <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-muted-foreground">
-                                        <div className="flex items-center space-x-1">
-                                            <CheckCircle className="w-4 h-4 text-green-600" />
-                                            <span>Gratuit</span>
-                                        </div>
-                                        <div className="flex items-center space-x-1">
-                                            <CheckCircle className="w-4 h-4 text-green-600" />
-                                            <span>Pas de carte bancaire</span>
-                                        </div>
-                                        <div className="flex items-center space-x-1">
-                                            <CheckCircle className="w-4 h-4 text-green-600" />
-                                            <span>Résultats instantanés</span>
-                                        </div>
+                                    <div className="flex items-center space-x-1">
+                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                        <span>Gratuit</span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                        <span>Pas de carte bancaire</span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                        <span>Résultats instantanés</span>
                                     </div>
                                 </div>
-                            </Card>
-                        </div>
+                            </div>
+                        </Card>
+                    </div>
 
                         {/* Stats */}
                         <div className="lg:col-span-4 flex flex-col h-full gap-3 sm:gap-4">
                             <Card className="widget-card p-4 sm:p-6 flex-1 flex flex-col">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-semibold text-foreground">Utilisateurs actifs</h3>
-                                    <div className="w-8 h-8 bg-green-soft rounded-xl flex items-center justify-center">
-                                        <TrendingUp className="w-4 h-4 text-green-700" />
-                                    </div>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-semibold text-foreground">Utilisateurs actifs</h3>
+                                <div className="w-8 h-8 bg-green-soft rounded-xl flex items-center justify-center">
+                                    <TrendingUp className="w-4 h-4 text-green-700" />
                                 </div>
-                                <div className="space-y-3 flex-1 flex flex-col justify-between">
-                                    <div>
-                                        <div className="text-3xl font-bold text-foreground">
-                                            {stats.users.toLocaleString('fr-FR')}
-                                        </div>
-                                        <div className="text-sm text-muted-foreground">{stats.usersChange}</div>
+                            </div>
+                            <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div className="text-3xl font-bold text-foreground">
+                                        {stats.users.toLocaleString('fr-FR')}
                                     </div>
-                                    <div className="w-full bg-secondary rounded-full h-2">
-                                        <div className="bg-green-600 h-2 rounded-full w-3/4 transition-all duration-1000"></div>
-                                    </div>
+                                    <div className="text-sm text-muted-foreground">{stats.usersChange}</div>
                                 </div>
-                            </Card>
+                                <div className="w-full bg-secondary rounded-full h-2">
+                                    <div className="bg-green-600 h-2 rounded-full w-3/4 transition-all duration-1000"></div>
+                                </div>
+                            </div>
+                        </Card>
 
                             <Card className="widget-card p-4 sm:p-6 flex-1 flex flex-col">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-semibold text-foreground">QCM générés</h3>
-                                    <div className="w-8 h-8 bg-primary/20 rounded-xl flex items-center justify-center">
-                                        <BarChart3 className="w-4 h-4 text-primary" />
-                                    </div>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-semibold text-foreground">QCM générés</h3>
+                                <div className="w-8 h-8 bg-primary/20 rounded-xl flex items-center justify-center">
+                                    <BarChart3 className="w-4 h-4 text-primary" />
                                 </div>
-                                <div className="space-y-3 flex-1 flex flex-col justify-between">
-                                    <div>
-                                        <div className="text-3xl font-bold text-foreground">
-                                            {stats.qcm.toLocaleString('fr-FR')}
-                                        </div>
-                                        <div className="text-sm text-muted-foreground">{stats.period}</div>
+                            </div>
+                            <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div className="text-3xl font-bold text-foreground">
+                                        {stats.qcm.toLocaleString('fr-FR')}
                                     </div>
-                                    <div className="flex space-x-1 h-8 items-end">
-                                        {[40, 60, 30, 80, 50, 90, 70].map((height, i) => (
-                                            <div
-                                                key={i}
-                                                className="flex-1 bg-primary rounded-sm transition-all duration-500 delay-100"
-                                                style={{ height: `${height / 2}px` }}
-                                            ></div>
-                                        ))}
-                                    </div>
+                                    <div className="text-sm text-muted-foreground">{stats.period}</div>
                                 </div>
-                            </Card>
+                                <div className="flex space-x-1 h-8 items-end">
+                                    {[40, 60, 30, 80, 50, 90, 70].map((height, i) => (
+                                        <div
+                                            key={i}
+                                            className="flex-1 bg-primary rounded-sm transition-all duration-500 delay-100"
+                                            style={{ height: `${height / 2}px` }}
+                                        ></div>
+                                    ))}
+                                </div>
+                            </div>
+                        </Card>
 
                             <Card className="widget-card p-4 sm:p-6 flex-1 flex flex-col">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-semibold text-foreground">Satisfaction</h3>
-                                    <div className="w-8 h-8 bg-yellow-100 rounded-xl flex items-center justify-center">
-                                        <Star className="w-4 h-4 text-yellow-600" />
-                                    </div>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-semibold text-foreground">Satisfaction</h3>
+                                <div className="w-8 h-8 bg-yellow-100 rounded-xl flex items-center justify-center">
+                                    <Star className="w-4 h-4 text-yellow-600" />
                                 </div>
-                                <div className="space-y-3 flex-1 flex flex-col justify-between">
-                                    <div>
-                                        <div className="text-3xl font-bold text-foreground">{stats.satisfaction}/5</div>
-                                        <div className="text-sm text-muted-foreground">2,847 avis</div>
-                                    </div>
-                                    <div className="flex space-x-1">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                        ))}
-                                    </div>
+                            </div>
+                            <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div className="text-3xl font-bold text-foreground">{stats.satisfaction}/5</div>
+                                    <div className="text-sm text-muted-foreground">2,847 avis</div>
                                 </div>
-                            </Card>
+                                <div className="flex space-x-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                    ))}
+                                </div>
+                            </div>
+                        </Card>
                         </div>
                     </div>
                 </section>
@@ -397,7 +397,7 @@ export default function HomePage() {
                                     Uploadez une photo ou un document, et notre IA génère automatiquement des QCM
                                     personnalisés pour optimiser vos révisions.
                                 </p>
-                            </div>
+                    </div>
 
                             <div
                                 className={`upload-zone rounded-2xl p-4 sm:p-6 lg:p-8 text-center cursor-pointer ${isDragOver ? "drag-over" : ""}`}
@@ -678,13 +678,13 @@ export default function HomePage() {
                             <div className="flex flex-col sm:flex-row gap-3 justify-center">
                                 {user ? (
                                     <Link href="/dashboard">
-                                        <Button
-                                            size="lg"
+                                <Button
+                                    size="lg"
                                             className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
                                         >
                                             <ImageIcon className="w-4 h-4 mr-2" />
                                             Essayer maintenant
-                                        </Button>
+                                </Button>
                                     </Link>
                                 ) : (
                                     <Link href="/register">

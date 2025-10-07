@@ -32,7 +32,7 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
                     name: 'RevisIA',
                     description: 'Générateur de QCM automatique utilisant l\'IA pour créer des quiz personnalisés',
                     url: 'https://revisia.app',
-                    logo: 'https://revisia.app/logo.svg',
+                    logo: 'https://revisia-app.fr/png/logo.png',
                     contactPoint: {
                         '@type': 'ContactPoint',
                         contactType: 'customer service',
@@ -81,7 +81,7 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
                         name: 'RevisIA',
                         logo: {
                             '@type': 'ImageObject',
-                            url: 'https://revisia.app/logo.svg'
+                            url: 'https://revisia-app.fr/png/logo.png'
                         }
                     },
                     datePublished: data?.datePublished || new Date().toISOString(),

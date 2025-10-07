@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    type: 'website',
+    type: 'video.other',
     locale: 'fr_FR',
     url: 'https://revisia-app.fr',
     title: 'RevisIA - Générateur de QCM par IA',
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     siteName: 'RevisIA',
     images: [
       {
-        url: '/og-image.svg',
+        url: 'https://revisia-app.fr/png/og-image.png',
         width: 1200,
         height: 630,
         alt: 'RevisIA - Plateforme de révisions intelligente',
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'RevisIA - Générateur de QCM par IA',
     description: 'Générateur de QCM automatique. Transformez vos documents en quiz personnalisés pour optimiser vos révisions.',
-    images: ['/og-image.svg'],
+    images: ['https://revisia-app.fr/png/og-image.png'],
     creator: '@revisia_app',
   },
   robots: {
@@ -101,13 +101,14 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/favicon.svg',
-        type: 'image/svg+xml',
+        url: '/png/favicon.png',
+        type: 'image/png',
       }
     ],
-    shortcut: '/favicon.svg',
-    apple: '/apple-touch-icon.svg',
+    shortcut: '/png/favicon.png',
+    apple: '/png/apple-touch-icon.png',
   },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -121,6 +122,16 @@ export default function RootLayout({
         <StructuredData type="website" />
         <StructuredData type="organization" />
         <StructuredData type="product" />
+
+        {/* Métadonnées image pour le partage social */}
+        <meta property="og:image" content="https://revisia-app.fr/png/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:type" content="image/png" />
+
+        {/* Image pour X/Twitter */}
+        <meta name="twitter:image" content="https://revisia-app.fr/png/og-image.png" />
+        <meta property="og:image:alt" content="RevisIA - Plateforme de révisions intelligente" />
 
         {/* Métadonnées vidéo pour le partage social */}
         <meta property="og:video" content="https://revisia-app.fr/videos/demo.mp4" />
