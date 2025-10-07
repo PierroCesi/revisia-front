@@ -30,6 +30,7 @@ import { useRealisticStats } from "@/hooks/useRealisticStats"
 import { validateFileSize, getFileSizeMessage } from "@/lib/fileLimits"
 import Link from "next/link"
 import AISettingsModal, { AISettings } from "@/components/AISettingsModal"
+import VideoPlayer from "@/components/VideoPlayer"
 
 export default function HomePage() {
     const [isDragOver, setIsDragOver] = useState(false)
@@ -179,126 +180,399 @@ export default function HomePage() {
             </div>
 
 
-            <main className="max-w-7xl mx-auto px-6 py-8 space-y-8 relative z-10">
-                <section className="grid lg:grid-cols-12 gap-6">
-                    {/* Main hero */}
-                    <div className="lg:col-span-8">
-                        <Card className="widget-card p-8 h-full">
-                            <div className="space-y-8">
-                                <div className="space-y-4">
-                                    <Badge variant="secondary" className="bg-orange-soft text-orange-700 border-0 shadow-sm">
-                                        <Sparkles className="w-3 h-3 mr-1" />
-                                        Nouveau
-                                    </Badge>
-                                    <h1 className="text-4xl lg:text-5xl font-bold text-balance leading-tight">
-                                        Transformez vos <span className="text-orange-700">documents</span> en QCM intelligents
-                                    </h1>
-                                    <p className="text-lg text-muted-foreground text-balance max-w-2xl">
-                                        Uploadez une photo ou un document, et notre IA génère automatiquement des QCM
-                                        personnalisés pour optimiser vos révisions.
-                                    </p>
-                                </div>
-
-                                <div
-                                    className={`upload-zone rounded-2xl p-8 text-center cursor-pointer ${isDragOver ? "drag-over" : ""}`}
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                    onDrop={handleDrop}
-                                    onClick={() => document.getElementById("file-input")?.click()}
-                                >
-                                    <input
-                                        id="file-input"
-                                        type="file"
-                                        multiple
-                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
-                                        onChange={handleFileSelect}
-                                        className="hidden"
-                                    />
-
+            <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6 sm:space-y-8 relative z-10">
+                {/* Hero + Stats Section - Desktop layout */}
+                <section className="hidden lg:block">
+                    <div className="grid lg:grid-cols-12 gap-6">
+                        {/* Main hero */}
+                        <div className="lg:col-span-8">
+                            <Card className="widget-card p-4 sm:p-6 lg:p-8 h-full">
+                                <div className="space-y-6 sm:space-y-8">
                                     <div className="space-y-4">
-                                        <div className="flex justify-center space-x-2">
-                                            <div className="w-12 h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
-                                                <Upload className="w-6 h-6 text-orange-700" />
+                                        <Badge variant="secondary" className="bg-orange-soft text-orange-700 border-0 shadow-sm">
+                                            <Sparkles className="w-3 h-3 mr-1" />
+                                            Nouveau
+                                        </Badge>
+                                        <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-balance leading-tight">
+                                            Transformez vos <span className="text-orange-700">documents</span> en QCM intelligents
+                                        </h1>
+                                        <p className="text-base sm:text-lg text-muted-foreground text-balance max-w-2xl">
+                                            Uploadez une photo ou un document, et notre IA génère automatiquement des QCM
+                                            personnalisés pour optimiser vos révisions.
+                                        </p>
+                                    </div>
+
+                                    <div
+                                        className={`upload-zone rounded-2xl p-4 sm:p-6 lg:p-8 text-center cursor-pointer ${isDragOver ? "drag-over" : ""}`}
+                                        onDragOver={handleDragOver}
+                                        onDragLeave={handleDragLeave}
+                                        onDrop={handleDrop}
+                                        onClick={() => document.getElementById("file-input")?.click()}
+                                    >
+                                        <input
+                                            id="file-input"
+                                            type="file"
+                                            multiple
+                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                                            onChange={handleFileSelect}
+                                            className="hidden"
+                                        />
+
+                                        <div className="space-y-3 sm:space-y-4">
+                                            <div className="flex justify-center space-x-1 sm:space-x-2">
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
+                                                    <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
+                                                </div>
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
+                                                    <ImageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
+                                                </div>
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
+                                                    <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
+                                                </div>
                                             </div>
-                                            <div className="w-12 h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
-                                                <ImageIcon className="w-6 h-6 text-orange-700" />
+
+                                            <div>
+                                                <h3 className="text-lg sm:text-xl font-semibold text-orange-700 mb-2">
+                                                    Glissez vos fichiers ici ou cliquez pour sélectionner
+                                                </h3>
+                                                <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                                                    PDF, Word, images, photos manuscrites - Générez vos QCM en quelques secondes
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {getFileSizeMessage(user ? (user.is_premium ? 'premium' : 'free') : 'guest')}
+                                                </p>
                                             </div>
-                                            <div className="w-12 h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
-                                                <FileText className="w-6 h-6 text-orange-700" />
+
+                                            <div className="flex flex-wrap justify-center gap-1 sm:gap-2 text-xs text-muted-foreground">
+                                                <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.PDF</span>
+                                                <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.DOC</span>
+                                                <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.JPG</span>
+                                                <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.PNG</span>
+                                                <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">Photos</span>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div>
-                                            <h3 className="text-xl font-semibold text-orange-700 mb-2">
-                                                Glissez vos fichiers ici ou cliquez pour sélectionner
-                                            </h3>
-                                            <p className="text-muted-foreground mb-2">
-                                                PDF, Word, images, photos manuscrites - Générez vos QCM en quelques secondes
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {getFileSizeMessage(user ? (user.is_premium ? 'premium' : 'free') : 'guest')}
-                                            </p>
+
+                                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                        {user ? (
+                                            <Link href="/dashboard">
+                                                <Button
+                                                    size="lg"
+                                                    className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                                >
+                                                    <ImageIcon className="w-4 h-4 mr-2" />
+                                                    Accéder au tableau de bord
+                                                </Button>
+                                            </Link>
+                                        ) : (
+                                            <Link href="/register">
+                                                <Button
+                                                    size="lg"
+                                                    className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                                >
+                                                    <ImageIcon className="w-4 h-4 mr-2" />
+                                                    Essayer gratuitement
+                                                </Button>
+                                            </Link>
+                                        )}
+                                        <Button
+                                            variant="outline"
+                                            size="lg"
+                                            className="border-border bg-transparent hover:bg-secondary/50"
+                                            onClick={() => {
+                                                const videoSection = document.querySelector('#video-demo')
+                                                if (videoSection) {
+                                                    videoSection.scrollIntoView({ behavior: 'smooth' })
+                                                }
+                                            }}
+                                        >
+                                            <Play className="w-4 h-4 mr-2" />
+                                            Voir la démo
+                                        </Button>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-muted-foreground">
+                                        <div className="flex items-center space-x-1">
+                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                            <span>Gratuit</span>
                                         </div>
-
-                                        <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
-                                            <span className="bg-secondary px-2 py-1 rounded-md">.PDF</span>
-                                            <span className="bg-secondary px-2 py-1 rounded-md">.DOC</span>
-                                            <span className="bg-secondary px-2 py-1 rounded-md">.JPG</span>
-                                            <span className="bg-secondary px-2 py-1 rounded-md">.PNG</span>
-                                            <span className="bg-secondary px-2 py-1 rounded-md">Photos</span>
+                                        <div className="flex items-center space-x-1">
+                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                            <span>Pas de carte bancaire</span>
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                            <span>Résultats instantanés</span>
                                         </div>
                                     </div>
                                 </div>
+                            </Card>
+                        </div>
 
-
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    {user ? (
-                                        <Link href="/dashboard">
-                                            <Button
-                                                size="lg"
-                                                className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
-                                            >
-                                                <ImageIcon className="w-4 h-4 mr-2" />
-                                                Accéder au tableau de bord
-                                            </Button>
-                                        </Link>
-                                    ) : (
-                                        <Link href="/register">
-                                            <Button
-                                                size="lg"
-                                                className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
-                                            >
-                                                <ImageIcon className="w-4 h-4 mr-2" />
-                                                Essayer gratuitement
-                                            </Button>
-                                        </Link>
-                                    )}
-                                    <Button variant="outline" size="lg" className="border-border bg-transparent hover:bg-secondary/50">
-                                        <Play className="w-4 h-4 mr-2" />
-                                        Voir la démo
-                                    </Button>
+                        {/* Stats */}
+                        <div className="lg:col-span-4 flex flex-col h-full gap-3 sm:gap-4">
+                            <Card className="widget-card p-4 sm:p-6 flex-1 flex flex-col">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-semibold text-foreground">Utilisateurs actifs</h3>
+                                    <div className="w-8 h-8 bg-green-soft rounded-xl flex items-center justify-center">
+                                        <TrendingUp className="w-4 h-4 text-green-700" />
+                                    </div>
                                 </div>
+                                <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <div className="text-3xl font-bold text-foreground">
+                                            {stats.users.toLocaleString('fr-FR')}
+                                        </div>
+                                        <div className="text-sm text-muted-foreground">{stats.usersChange}</div>
+                                    </div>
+                                    <div className="w-full bg-secondary rounded-full h-2">
+                                        <div className="bg-green-600 h-2 rounded-full w-3/4 transition-all duration-1000"></div>
+                                    </div>
+                                </div>
+                            </Card>
 
-                                <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-                                    <div className="flex items-center space-x-1">
-                                        <CheckCircle className="w-4 h-4 text-green-600" />
-                                        <span>Gratuit</span>
+                            <Card className="widget-card p-4 sm:p-6 flex-1 flex flex-col">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-semibold text-foreground">QCM générés</h3>
+                                    <div className="w-8 h-8 bg-primary/20 rounded-xl flex items-center justify-center">
+                                        <BarChart3 className="w-4 h-4 text-primary" />
                                     </div>
-                                    <div className="flex items-center space-x-1">
-                                        <CheckCircle className="w-4 h-4 text-green-600" />
-                                        <span>Pas de carte bancaire</span>
+                                </div>
+                                <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <div className="text-3xl font-bold text-foreground">
+                                            {stats.qcm.toLocaleString('fr-FR')}
+                                        </div>
+                                        <div className="text-sm text-muted-foreground">{stats.period}</div>
                                     </div>
-                                    <div className="flex items-center space-x-1">
-                                        <CheckCircle className="w-4 h-4 text-green-600" />
-                                        <span>Résultats instantanés</span>
+                                    <div className="flex space-x-1 h-8 items-end">
+                                        {[40, 60, 30, 80, 50, 90, 70].map((height, i) => (
+                                            <div
+                                                key={i}
+                                                className="flex-1 bg-primary rounded-sm transition-all duration-500 delay-100"
+                                                style={{ height: `${height / 2}px` }}
+                                            ></div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </Card>
+
+                            <Card className="widget-card p-4 sm:p-6 flex-1 flex flex-col">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-semibold text-foreground">Satisfaction</h3>
+                                    <div className="w-8 h-8 bg-yellow-100 rounded-xl flex items-center justify-center">
+                                        <Star className="w-4 h-4 text-yellow-600" />
+                                    </div>
+                                </div>
+                                <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <div className="text-3xl font-bold text-foreground">{stats.satisfaction}/5</div>
+                                        <div className="text-sm text-muted-foreground">2,847 avis</div>
+                                    </div>
+                                    <div className="flex space-x-1">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                        ))}
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Hero Section - Mobile only */}
+                <section className="lg:hidden">
+                    <Card className="widget-card p-4 sm:p-6 lg:p-8 h-full">
+                        <div className="space-y-6 sm:space-y-8">
+                            <div className="space-y-4">
+                                <Badge variant="secondary" className="bg-orange-soft text-orange-700 border-0 shadow-sm">
+                                    <Sparkles className="w-3 h-3 mr-1" />
+                                    Nouveau
+                                </Badge>
+                                <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-balance leading-tight">
+                                    Transformez vos <span className="text-orange-700">documents</span> en QCM intelligents
+                                </h1>
+                                <p className="text-base sm:text-lg text-muted-foreground text-balance max-w-2xl">
+                                    Uploadez une photo ou un document, et notre IA génère automatiquement des QCM
+                                    personnalisés pour optimiser vos révisions.
+                                </p>
+                            </div>
+
+                            <div
+                                className={`upload-zone rounded-2xl p-4 sm:p-6 lg:p-8 text-center cursor-pointer ${isDragOver ? "drag-over" : ""}`}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                onClick={() => document.getElementById("file-input")?.click()}
+                            >
+                                <input
+                                    id="file-input"
+                                    type="file"
+                                    multiple
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                                    onChange={handleFileSelect}
+                                    className="hidden"
+                                />
+
+                                <div className="space-y-3 sm:space-y-4">
+                                    <div className="flex justify-center space-x-1 sm:space-x-2">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
+                                            <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
+                                        </div>
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
+                                            <ImageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
+                                        </div>
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-primary/20 rounded-xl flex items-center justify-center">
+                                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 className="text-lg sm:text-xl font-semibold text-orange-700 mb-2">
+                                            Glissez vos fichiers ici ou cliquez pour sélectionner
+                                        </h3>
+                                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                                            PDF, Word, images, photos manuscrites - Générez vos QCM en quelques secondes
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {getFileSizeMessage(user ? (user.is_premium ? 'premium' : 'free') : 'guest')}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-wrap justify-center gap-1 sm:gap-2 text-xs text-muted-foreground">
+                                        <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.PDF</span>
+                                        <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.DOC</span>
+                                        <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.JPG</span>
+                                        <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">.PNG</span>
+                                        <span className="bg-secondary px-1.5 sm:px-2 py-1 rounded-md">Photos</span>
                                     </div>
                                 </div>
                             </div>
-                        </Card>
+
+
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                {user ? (
+                                    <Link href="/dashboard">
+                                        <Button
+                                            size="lg"
+                                            className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                        >
+                                            <ImageIcon className="w-4 h-4 mr-2" />
+                                            Accéder au tableau de bord
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <Link href="/register">
+                                        <Button
+                                            size="lg"
+                                            className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                        >
+                                            <ImageIcon className="w-4 h-4 mr-2" />
+                                            Essayer gratuitement
+                                        </Button>
+                                    </Link>
+                                )}
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="border-border bg-transparent hover:bg-secondary/50"
+                                    onClick={() => {
+                                        const videoSection = document.querySelector('#video-demo')
+                                        if (videoSection) {
+                                            videoSection.scrollIntoView({ behavior: 'smooth' })
+                                        }
+                                    }}
+                                >
+                                    <Play className="w-4 h-4 mr-2" />
+                                    Voir la démo
+                                </Button>
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-muted-foreground">
+                                <div className="flex items-center space-x-1">
+                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                    <span>Gratuit</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                    <span>Pas de carte bancaire</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                    <span>Résultats instantanés</span>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </section>
+
+                {/* Section Vidéo de démonstration - Visible uniquement sur mobile */}
+                <section className="lg:hidden">
+                    <div className="mb-6 sm:mb-8 text-center">
+                        <h2 id="video-demo" className="text-2xl sm:text-3xl font-bold text-foreground mb-3">Découvrez RevisIA en action</h2>
+                        <p className="text-muted-foreground text-base sm:text-lg">Regardez comment transformer vos documents en QCM en quelques secondes</p>
                     </div>
 
-                    <div className="lg:col-span-4 flex flex-col h-full gap-4">
-                        <Card className="widget-card p-6 flex-1 flex flex-col">
+                    <Card className="widget-card p-4 sm:p-6 lg:p-8">
+                        <div className="relative">
+                            <VideoPlayer
+                                src="/videos/demo.mp4"
+                                className="w-full h-auto min-h-[250px] sm:min-h-[300px] lg:min-h-[500px]"
+                                autoplay={true}
+                                muted={true}
+                                loop={true}
+                                controls={true}
+                            />
+                        </div>
+
+                        <div className="mt-6 text-center space-y-4">
+                            <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span>Génération automatique</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    <span>Interface intuitive</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                    <span>Résultats instantanés</span>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                {user ? (
+                                    <Link href="/dashboard">
+                                        <Button
+                                            size="lg"
+                                            className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                        >
+                                            <ImageIcon className="w-4 h-4 mr-2" />
+                                            Essayer maintenant
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <Link href="/register">
+                                        <Button
+                                            size="lg"
+                                            className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                        >
+                                            <ImageIcon className="w-4 h-4 mr-2" />
+                                            Commencer gratuitement
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                    </Card>
+                </section>
+
+                {/* Stats Section - Visible uniquement sur mobile */}
+                <section className="lg:hidden">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <Card className="widget-card p-4 sm:p-6 flex-1 flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-semibold text-foreground">Utilisateurs actifs</h3>
                                 <div className="w-8 h-8 bg-green-soft rounded-xl flex items-center justify-center">
@@ -318,7 +592,7 @@ export default function HomePage() {
                             </div>
                         </Card>
 
-                        <Card className="widget-card p-6 flex-1 flex flex-col">
+                        <Card className="widget-card p-4 sm:p-6 flex-1 flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-semibold text-foreground">QCM générés</h3>
                                 <div className="w-8 h-8 bg-primary/20 rounded-xl flex items-center justify-center">
@@ -344,7 +618,7 @@ export default function HomePage() {
                             </div>
                         </Card>
 
-                        <Card className="widget-card p-6 flex-1 flex flex-col">
+                        <Card className="widget-card p-4 sm:p-6 flex-1 flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-semibold text-foreground">Satisfaction</h3>
                                 <div className="w-8 h-8 bg-yellow-100 rounded-xl flex items-center justify-center">
@@ -366,13 +640,75 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                <section>
-                    <div className="mb-8 text-center">
-                        <h2 className="text-3xl font-bold text-foreground mb-3">Comment ça marche</h2>
-                        <p className="text-muted-foreground text-lg">Trois étapes simples pour révolutionner vos révisions</p>
+                {/* Section Vidéo de démonstration - Visible uniquement sur desktop */}
+                <section className="hidden lg:block">
+                    <div className="mb-6 sm:mb-8 text-center">
+                        <h2 id="video-demo" className="text-2xl sm:text-3xl font-bold text-foreground mb-3">Découvrez RevisIA en action</h2>
+                        <p className="text-muted-foreground text-base sm:text-lg">Regardez comment transformer vos documents en QCM en quelques secondes</p>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-6">
+                    <Card className="widget-card p-4 sm:p-6 lg:p-8">
+                        <div className="relative">
+                            <VideoPlayer
+                                src="/videos/demo.mp4"
+                                className="w-full h-auto min-h-[250px] sm:min-h-[300px] lg:min-h-[500px]"
+                                autoplay={true}
+                                muted={true}
+                                loop={true}
+                                controls={true}
+                            />
+                        </div>
+
+                        <div className="mt-6 text-center space-y-4">
+                            <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span>Génération automatique</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    <span>Interface intuitive</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                    <span>Résultats instantanés</span>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                {user ? (
+                                    <Link href="/dashboard">
+                                        <Button
+                                            size="lg"
+                                            className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                        >
+                                            <ImageIcon className="w-4 h-4 mr-2" />
+                                            Essayer maintenant
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <Link href="/register">
+                                        <Button
+                                            size="lg"
+                                            className="bg-orange-primary text-white shadow-lg hover:shadow-xl transition-all hover:bg-orange-700"
+                                        >
+                                            <ImageIcon className="w-4 h-4 mr-2" />
+                                            Commencer gratuitement
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                    </Card>
+                </section>
+
+                <section>
+                    <div className="mb-6 sm:mb-8 text-center">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">Comment ça marche</h2>
+                        <p className="text-muted-foreground text-base sm:text-lg">Trois étapes simples pour révolutionner vos révisions</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
                         {[
                             {
                                 icon: Camera,
@@ -398,14 +734,14 @@ export default function HomePage() {
                         ].map((step, index) => (
                             <Card
                                 key={index}
-                                className="widget-card p-8 text-center group hover:scale-105 transition-all duration-300"
+                                className="widget-card p-6 sm:p-8 text-center group hover:scale-105 transition-all duration-300"
                             >
                                 <div
-                                    className={`w-16 h-16 ${step.color} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300`}
+                                    className={`w-12 h-12 sm:w-16 sm:h-16 ${step.color} rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300`}
                                 >
-                                    <step.icon className={`w-8 h-8 ${step.iconColor}`} />
+                                    <step.icon className={`w-6 h-6 sm:w-8 sm:h-8 ${step.iconColor}`} />
                                 </div>
-                                <h3 className="font-semibold text-foreground mb-3 text-lg">{step.title}</h3>
+                                <h3 className="font-semibold text-foreground mb-3 text-base sm:text-lg">{step.title}</h3>
                                 <p className="text-muted-foreground">{step.description}</p>
                             </Card>
                         ))}
@@ -507,13 +843,6 @@ export default function HomePage() {
                                         </Button>
                                     </Link>
                                 )}
-                                <Button
-                                    variant="outline"
-                                    size="lg"
-                                    className="border-border bg-transparent hover:bg-secondary/50 text-lg px-8 py-4"
-                                >
-                                    Planifier une démo
-                                </Button>
                             </div>
 
                             <div className="flex items-center justify-center space-x-8 text-sm text-muted-foreground">

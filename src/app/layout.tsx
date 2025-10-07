@@ -47,14 +47,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://revisia.app'),
+  metadataBase: new URL('https://revisia-app.fr'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    url: 'https://revisia.app',
+    url: 'https://revisia-app.fr',
     title: 'RevisIA - Générateur de QCM par IA',
     description: 'Générateur de QCM automatique. Transformez vos documents en quiz personnalisés pour optimiser vos révisions.',
     siteName: 'RevisIA',
@@ -64,6 +64,14 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         alt: 'RevisIA - Plateforme de révisions intelligente',
+      },
+    ],
+    videos: [
+      {
+        url: 'https://revisia-app.fr/videos/demo.mp4',
+        type: 'video/mp4',
+        width: 1920,
+        height: 1080,
       },
     ],
   },
@@ -113,6 +121,19 @@ export default function RootLayout({
         <StructuredData type="website" />
         <StructuredData type="organization" />
         <StructuredData type="product" />
+
+        {/* Métadonnées vidéo pour le partage social */}
+        <meta property="og:video" content="https://revisia-app.fr/videos/demo.mp4" />
+        <meta property="og:video:type" content="video/mp4" />
+        <meta property="og:video:width" content="1920" />
+        <meta property="og:video:height" content="1080" />
+        <meta property="og:video:secure_url" content="https://revisia-app.fr/videos/demo.mp4" />
+        <meta property="og:video:duration" content="30" />
+
+        {/* Métadonnées supplémentaires pour Facebook */}
+        <meta property="og:video:url" content="https://revisia-app.fr/videos/demo.mp4" />
+        <meta property="og:video:tag" content="IA, QCM, révisions, éducation" />
+        <meta property="og:video:stream" content="https://revisia-app.fr/videos/demo.mp4" />
       </head>
       <body className={`font-sans ${geistSans.variable} ${geistMono.variable}`}>
         <Suspense fallback={null}>

@@ -34,7 +34,7 @@ export default function AttemptDetailsModal({ isOpen, onClose, attemptData, less
 
     // Fonctions pour changer de question en maintenant la position de scroll
     const goToPreviousQuestion = useCallback(() => {
-        const modalElement = document.querySelector('.widget-card');
+        const modalElement = document.querySelector('.attempt-modal-content');
         if (modalElement) {
             setScrollPosition(modalElement.scrollTop);
         }
@@ -42,7 +42,7 @@ export default function AttemptDetailsModal({ isOpen, onClose, attemptData, less
     }, [currentQuestionIndex]);
 
     const goToNextQuestion = useCallback(() => {
-        const modalElement = document.querySelector('.widget-card');
+        const modalElement = document.querySelector('.attempt-modal-content');
         if (modalElement) {
             setScrollPosition(modalElement.scrollTop);
         }
@@ -51,7 +51,7 @@ export default function AttemptDetailsModal({ isOpen, onClose, attemptData, less
 
     // Restaurer la position de scroll après le changement de question
     useEffect(() => {
-        const modalElement = document.querySelector('.widget-card');
+        const modalElement = document.querySelector('.attempt-modal-content');
         if (modalElement && scrollPosition > 0) {
             modalElement.scrollTop = scrollPosition;
         }
@@ -154,10 +154,11 @@ export default function AttemptDetailsModal({ isOpen, onClose, attemptData, less
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-0 sm:p-4">
             <Card
-                className="widget-card max-w-4xl w-full p-3 sm:p-6 relative max-h-[100vh] sm:max-h-[90vh] overflow-y-auto custom-scrollbar"
+                className="widget-card attempt-modal-content max-w-4xl w-full p-3 sm:p-6 relative max-h-[100vh] sm:max-h-[90vh] overflow-y-auto"
                 style={{
                     scrollbarWidth: 'thin',
-                    scrollbarColor: '#d1d5db #f3f4f6'
+                    scrollbarColor: '#d1d5db #f3f4f6',
+                    WebkitOverflowScrolling: 'touch'
                 }}
             >
                 {/* Header */}

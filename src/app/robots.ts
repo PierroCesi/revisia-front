@@ -18,3 +18,7 @@ export default function robots(): MetadataRoute.Robots {
         sitemap: 'https://revisia-app.fr/sitemap.xml',
     }
 }
+
+
+
+
